@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PE Manager — Clinical Decision Support</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{
+  --bg:#03060d;--s1:#080f1c;--s2:#0d1626;--s3:#111e32;
+  --border:#1a2d48;--border2:#243d5e;
+  --text:#e4f0ff;--dim:#8aaccc;--muted:#4a6a8a;
+  --cyan:#00d4ff;--green:#00e5a0;--yellow:#ffd600;
+  --orange:#ff8c00;--red:#ff4444;--purple:#bf80ff;--teal:#2dd4bf;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(0,212,255,.04) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 90%,rgba(0,229,160,.03) 0%,transparent 60%);pointer-events:none;z-index:0}
+.topbar{position:relative;z-index:10;background:var(--s1);border-bottom:1px solid var(--border);padding:0 1rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--cyan),var(--green));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.logo-text{font-weight:800;font-size:1.05rem;color:var(--text);letter-spacing:-.02em;margin-left:.5rem}
+.logo-text span{color:var(--cyan)}
+.topbar-badge{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:.15rem .5rem}
+.topbar-logo{display:flex;align-items:center}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
+.bottom-nav{position:relative;z-index:10;background:var(--s1);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);height:60px;flex-shrink:0}
+.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .15s;border:none;background:transparent;color:var(--muted);padding:0}
+.nav-btn.active{color:var(--cyan)}
+.nav-icon{font-size:1.2rem;line-height:1}
+.nav-label{font-size:.6rem;font-weight:500;letter-spacing:.02em;line-height:1}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:transparent;transition:all .15s}
+.nav-btn.active .nav-dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.screen{display:none;padding:1rem}
+.screen.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sec-title{font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.75rem}
+.card-title{font-weight:700;font-size:.9rem;margin-bottom:.15rem;display:flex;align-items:center;gap:.5rem}
+.card-sub{font-size:.72rem;color:var(--dim);margin-bottom:.75rem}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:600;padding:.12rem .5rem;border-radius:20px;margin:.1rem .1rem 0 0}
+.chip-cyan{background:rgba(0,212,255,.12);color:var(--cyan);border:1px solid rgba(0,212,255,.25)}
+.chip-green{background:rgba(0,229,160,.12);color:var(--green);border:1px solid rgba(0,229,160,.25)}
+.chip-yellow{background:rgba(255,214,0,.12);color:var(--yellow);border:1px solid rgba(255,214,0,.25)}
+.chip-orange{background:rgba(255,140,0,.12);color:var(--orange);border:1px solid rgba(255,140,0,.25)}
+.chip-red{background:rgba(255,68,68,.12);color:var(--red);border:1px solid rgba(255,68,68,.25)}
+.chip-purple{background:rgba(191,128,255,.12);color:var(--purple);border:1px solid rgba(191,128,255,.25)}
+.chip-muted{background:rgba(74,106,138,.15);color:var(--dim);border:1px solid var(--border)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;font-family:'Outfit',sans-serif;font-weight:600;font-size:.82rem;padding:.6rem 1.2rem;border-radius:8px;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000}
+.btn-primary:hover{opacity:.9}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--dim)}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-red{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.4);color:var(--red)}
+.btn-green{background:rgba(0,229,160,.15);border:1px solid rgba(0,229,160,.4);color:var(--green)}
+.btn-orange{background:rgba(255,140,0,.15);border:1px solid rgba(255,140,0,.4);color:var(--orange)}
+.btn-yellow{background:rgba(255,214,0,.15);border:1px solid rgba(255,214,0,.4);color:var(--yellow)}
+.btn-full{width:100%}
+.btn-sm{font-size:.72rem;padding:.4rem .85rem}
+.check-item{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;background:var(--s2);border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;cursor:pointer;transition:all .12s;user-select:none}
+.check-item:hover{border-color:var(--border2)}
+.check-item.checked{background:rgba(0,212,255,.07);border-color:rgba(0,212,255,.35)}
+.check-item.checked .chk-box{background:var(--cyan);border-color:var(--cyan)}
+.check-item.checked .chk-box::after{display:block}
+.chk-box{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;position:relative;transition:all .12s}
+.chk-box::after{content:'✓';display:none;position:absolute;inset:0;color:#000;font-size:.7rem;font-weight:800;text-align:center;line-height:18px}
+.chk-label{font-size:.8rem;flex:1}
+.chk-score{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--cyan);font-weight:600}
+.result-box{border-radius:12px;padding:1rem;margin-top:.75rem;border:1px solid}
+.result-box.green{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.3)}
+.result-box.yellow{background:rgba(255,214,0,.07);border-color:rgba(255,214,0,.3)}
+.result-box.orange{background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.3)}
+.result-box.red{background:rgba(255,68,68,.07);border-color:rgba(255,68,68,.3)}
+.result-box.cyan{background:rgba(0,212,255,.07);border-color:rgba(0,212,255,.3)}
+.result-title{font-weight:800;font-size:1.1rem;margin-bottom:.3rem}
+.result-sub{font-size:.78rem;color:var(--dim);margin-bottom:.6rem}
+.score-circle{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;border:2px solid}
+.pill-tabs{display:flex;flex-wrap:nowrap;gap:.35rem;margin-bottom:.75rem;overflow-x:auto;padding-bottom:.1rem;scrollbar-width:none}
+.pill-tabs::-webkit-scrollbar{display:none}
+.pill-tab{font-size:.68rem;font-weight:600;padding:.35rem .8rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s}
+.pill-tab.active{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.alert{border-radius:8px;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.75rem;line-height:1.55;display:flex;gap:.5rem;align-items:flex-start}
+.alert-icon{flex-shrink:0;font-size:.9rem}
+.alert-red{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.25)}
+.alert-yellow{background:rgba(255,214,0,.08);border:1px solid rgba(255,214,0,.25)}
+.alert-green{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25)}
+.alert-cyan{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25)}
+.alert-orange{background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.25)}
+.divider{height:1px;background:var(--border);margin:.75rem 0}
+.dose-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:.85rem;margin-bottom:.5rem}
+.dose-drug{font-weight:700;font-size:.88rem;margin-bottom:.2rem}
+.dose-class{font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:.4rem}
+.dose-row{display:flex;justify-content:space-between;align-items:flex-start;padding:.35rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.dose-row:last-child{border-bottom:none;padding-bottom:0}
+.dose-phase{font-size:.68rem;color:var(--dim);flex:1}
+.dose-val{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--cyan);font-weight:600;text-align:right;flex-shrink:0}
+.dose-note{font-size:.62rem;color:var(--muted);margin-top:.08rem;display:block}
+.mgmt-step{display:flex;gap:.75rem;margin-bottom:.55rem;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--s3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:600;color:var(--cyan);flex-shrink:0;margin-top:.1rem}
+.step-body{flex:1}
+.step-title{font-weight:600;font-size:.82rem;margin-bottom:.12rem}
+.step-detail{font-size:.73rem;color:var(--dim);line-height:1.5}
+.assess-panel{display:none}
+.assess-panel.active-panel{display:block}
+/* Nav bar between steps */
+.step-nav{display:flex;gap:.5rem;margin-bottom:.75rem}
+.step-nav .back-btn{flex:0 0 auto;background:var(--s2);border:1px solid var(--border2);color:var(--dim);border-radius:8px;padding:.45rem .85rem;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem;transition:all .15s}
+.step-nav .back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.step-nav .step-indicator{flex:1;display:flex;align-items:center;justify-content:center;gap:.3rem}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .15s}
+.step-dot.active{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.step-dot.done{background:var(--green)}
+/* Expandable mgmt option */
+.mgmt-option{background:var(--s2);border:1px solid var(--border);border-radius:10px;margin-bottom:.45rem;overflow:hidden;transition:border-color .15s}
+.mgmt-option:hover{border-color:var(--border2)}
+.mgmt-option-header{display:flex;align-items:center;gap:.65rem;padding:.7rem .85rem;cursor:pointer;user-select:none}
+.mgmt-option-icon{font-size:1.1rem;flex-shrink:0}
+.mgmt-option-title{font-weight:600;font-size:.82rem;flex:1}
+.mgmt-option-arrow{color:var(--muted);font-size:.9rem;transition:transform .2s}
+.mgmt-option.open .mgmt-option-arrow{transform:rotate(90deg);color:var(--cyan)}
+.mgmt-option.open{border-color:rgba(0,212,255,.3)}
+.mgmt-option-body{display:none;padding:.75rem .85rem;padding-top:0;border-top:1px solid var(--border)}
+.mgmt-option.open .mgmt-option-body{display:block}
+/* Dose calculator */
+.calc-wrap{background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:.85rem;margin-bottom:.75rem}
+.calc-title{font-weight:700;font-size:.85rem;color:var(--cyan);margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.weight-input-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.6rem}
+.weight-input{background:var(--s1);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:600;padding:.5rem .75rem;width:90px;outline:none;transition:border-color .15s;text-align:center}
+.weight-input:focus{border-color:var(--cyan)}
+.weight-unit{font-size:.75rem;color:var(--dim)}
+.calc-result{background:var(--s1);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:.65rem .75rem;margin-top:.5rem}
+.calc-drug-row{display:flex;justify-content:space-between;align-items:baseline;padding:.3rem 0;border-bottom:1px solid var(--border)}
+.calc-drug-row:last-child{border-bottom:none}
+.calc-drug-name{font-size:.75rem;color:var(--dim);flex:1}
+.calc-drug-dose{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--cyan);font-weight:700}
+.calc-drug-note{font-size:.62rem;color:var(--muted);text-align:right;display:block}
+/* Monitor table */
+.monitor-item{display:flex;align-items:flex-start;gap:.6rem;padding:.45rem 0;border-bottom:1px solid var(--border)}
+.monitor-item:last-child{border-bottom:none}
+.monitor-icon{font-size:.9rem;flex-shrink:0;margin-top:.05rem}
+.monitor-text{flex:1}
+.monitor-label{font-size:.75rem;font-weight:600;color:var(--text);margin-bottom:.08rem}
+.monitor-val{font-size:.68rem;color:var(--dim);line-height:1.5}
+/* Cat wizard */
+.wiz-cat-banner{border-radius:14px;padding:1rem 1.1rem;margin-bottom:.75rem;border:2px solid}
+.wiz-cat-letter{font-size:2rem;font-weight:800;line-height:1;margin-bottom:.15rem}
+.wiz-cat-title{font-size:.95rem;font-weight:700;margin-bottom:.3rem}
+.wiz-cat-desc{font-size:.73rem;line-height:1.6;margin-bottom:.6rem}
+/* Floating dose calc button */
+.fab{position:fixed;bottom:72px;right:14px;z-index:100;background:linear-gradient(135deg,var(--cyan),var(--green));color:#000;border:none;border-radius:50%;width:48px;height:48px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,212,255,.35);transition:all .15s}
+.fab:hover{transform:scale(1.08)}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:1.25rem 1rem 2rem;width:100%;max-width:500px;max-height:85vh;overflow-y:auto}
+.modal-title{font-weight:800;font-size:1rem;color:var(--cyan);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:var(--s2);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;color:var(--muted)}
+.bullet-list{list-style:none}
+.bullet-list li{font-size:.78rem;color:var(--dim);padding:.25rem 0;padding-left:1rem;position:relative;line-height:1.5}
+.bullet-list li::before{content:'›';position:absolute;left:0;color:var(--cyan);font-weight:700}
+.disclaimer{font-size:.6rem;color:var(--muted);text-align:center;padding:.5rem;line-height:1.5;font-family:'JetBrains Mono',monospace}
+
+/* ═══ TERMS OF USE / ONBOARDING ═══ */
+.tou-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.tou-header{background:var(--s1);border-bottom:1px solid var(--border);padding:1rem;text-align:center;flex-shrink:0}
+.tou-logo{font-size:2.2rem;margin-bottom:.25rem}
+.tou-title{font-weight:800;font-size:1.2rem;color:var(--cyan);letter-spacing:-.01em}
+.tou-subtitle{font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:.2rem}
+.tou-body{flex:1;padding:1rem;max-width:540px;margin:0 auto;width:100%}
+.tou-section{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;margin-bottom:.75rem}
+.tou-section-title{font-weight:700;font-size:.85rem;color:var(--yellow);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.tou-text{font-size:.73rem;color:var(--dim);line-height:1.7}
+.tou-text strong{color:var(--text)}
+.tou-checkbox-row{display:flex;align-items:flex-start;gap:.75rem;padding:.65rem .85rem;background:var(--s2);border:1.5px solid var(--border2);border-radius:10px;margin-bottom:.5rem;cursor:pointer;user-select:none;transition:border-color .15s}
+.tou-checkbox-row.checked{border-color:var(--green);background:rgba(0,229,160,.06)}
+.tou-checkbox-row .chk-box{margin-top:.1rem;flex-shrink:0}
+.tou-checkbox-row.checked .chk-box{background:var(--green);border-color:var(--green)}
+.tou-checkbox-label{font-size:.78rem;line-height:1.5}
+.tou-footer{padding:1rem;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0;max-width:540px;margin:0 auto;width:100%}
+.tou-accept-btn{width:100%;padding:.85rem;border-radius:12px;border:none;font-family:'Outfit',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .15s;background:var(--border2);color:var(--muted)}
+.tou-accept-btn.enabled{background:linear-gradient(135deg,var(--cyan),var(--green));color:#000;box-shadow:0 4px 20px rgba(0,212,255,.3)}
+
+/* ═══ ABOUT / REFERENCES SCREEN ═══ */
+.ref-item{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:.65rem .85rem;margin-bottom:.4rem;font-size:.72rem;color:var(--dim);line-height:1.6}
+.ref-num{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--cyan);font-weight:600;margin-right:.4rem}
+.version-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.68rem;background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.25);border-radius:4px;padding:.15rem .5rem;margin-right:.4rem}
+
+/* ═══ REVERSAL / POST-PE SCREENS ═══ */
+.reversal-drug{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:.85rem;margin-bottom:.6rem}
+.reversal-name{font-weight:700;font-size:.88rem;margin-bottom:.2rem}
+.reversal-class{font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:.5rem}
+
+/* ═══ FEEDBACK MODAL ═══ */
+.feedback-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
+.feedback-chip{font-size:.72rem;padding:.3rem .7rem;border-radius:20px;border:1px solid var(--border2);background:var(--s2);color:var(--dim);cursor:pointer;transition:all .12s}
+.feedback-chip.selected{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.08)}
+textarea.feedback-input{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.82rem;padding:.6rem .75rem;resize:vertical;min-height:80px;outline:none}
+textarea.feedback-input:focus{border-color:var(--cyan)}
+
+/* PERT contact button */
+.pert-contact-btn{display:flex;align-items:center;gap:.65rem;background:rgba(255,68,68,.1);border:1.5px solid rgba(255,68,68,.4);border-radius:10px;padding:.75rem 1rem;cursor:pointer;transition:all .15s;margin-bottom:.75rem}
+.pert-contact-btn:hover{background:rgba(255,68,68,.18)}
+
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">🫁</div>
+    <div class="logo-text">PE<span>Manager</span></div>
+  </div>
+  <div class="topbar-badge">2026 AHA/ACC</div>
+</div>
+
+<!-- FLOATING DOSE CALCULATOR BUTTON -->
+<button class="fab" onclick="openCalc()" title="Weight-based dose calculator">⚖️</button>
+
+<!-- DOSE CALCULATOR MODAL -->
+<div id="calc-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeCalc()">
+  <div class="modal">
+    <div class="modal-title">
+      ⚖️ Weight-Based Dose Calculator
+      <div class="modal-close" onclick="closeCalc()">✕</div>
+    </div>
+    <div class="calc-wrap" style="margin-bottom:.75rem">
+      <div class="calc-title">Enter Patient Weight</div>
+      <div class="weight-input-row">
+        <input class="weight-input" type="number" id="modal-weight" placeholder="70" min="20" max="300" oninput="calcModalDoses()">
+        <span class="weight-unit">kg</span>
+      </div>
+      <div id="modal-calc-result" style="display:none">
+        <div style="font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Recommended Doses</div>
+
+        <div style="font-size:.72rem;font-weight:700;color:var(--green);margin:.5rem 0 .25rem">✅ Anticoagulants</div>
+        <div class="calc-result">
+          <div class="calc-drug-row"><div class="calc-drug-name">Enoxaparin (treatment)</div><div><div class="calc-drug-dose" id="c-enox-treat">—</div><div class="calc-drug-note">SC q12h (cap 120 mg/dose)</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Enoxaparin OD (treatment)</div><div><div class="calc-drug-dose" id="c-enox-od">—</div><div class="calc-drug-note">SC q24h (cap 180 mg)</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">UFH bolus</div><div><div class="calc-drug-dose" id="c-hep-bolus">—</div><div class="calc-drug-note">IV (max 10,000 U)</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">UFH infusion (start)</div><div><div class="calc-drug-dose" id="c-hep-inf">—</div><div class="calc-drug-note">U/hr — titrate to aPTT 60–80 sec</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Fondaparinux</div><div><div class="calc-drug-dose" id="c-fonda">—</div><div class="calc-drug-note">SC OD (weight-based)</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Dalteparin (cancer PE, month 1)</div><div><div class="calc-drug-dose" id="c-dalt">—</div><div class="calc-drug-note">SC OD (max 18,000 IU/day)</div></div></div>
+        </div>
+
+        <div style="font-size:.72rem;font-weight:700;color:var(--red);margin:.75rem 0 .25rem">🚨 Thrombolytics (PERT/Cat E only)</div>
+        <div class="calc-result">
+          <div class="calc-drug-row"><div class="calc-drug-name">Alteplase — Full dose</div><div><div class="calc-drug-dose">100 mg / 2h</div><div class="calc-drug-note">10 mg bolus + 90 mg/2h (fixed dose)</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Alteplase — Half dose</div><div><div class="calc-drug-dose">50 mg / 2h</div><div class="calc-drug-note">Cat C3/D or high bleed risk</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Alteplase — Arrest</div><div><div class="calc-drug-dose">50 mg bolus</div><div class="calc-drug-note">CPR ×90 min post-lysis</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Tenecteplase (weight-based)</div><div><div class="calc-drug-dose" id="c-tnk">—</div><div class="calc-drug-note">Single IV bolus (off-label for PE)</div></div></div>
+        </div>
+
+        <div style="font-size:.72rem;font-weight:700;color:var(--yellow);margin:.75rem 0 .25rem">💊 Oral Anticoagulants (fixed doses)</div>
+        <div class="calc-result">
+          <div class="calc-drug-row"><div class="calc-drug-name">Rivaroxaban — loading (wk 1–3)</div><div><div class="calc-drug-dose">15 mg BD</div><div class="calc-drug-note">With food ≥500 kcal</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Rivaroxaban — maintenance</div><div><div class="calc-drug-dose">20 mg OD</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Apixaban — loading (day 1–7)</div><div><div class="calc-drug-dose">10 mg BD</div></div></div>
+          <div class="calc-drug-row"><div class="calc-drug-name">Apixaban — maintenance</div><div><div id="c-apix-maint" class="calc-drug-dose">5 mg BD</div><div class="calc-drug-note" id="c-apix-note">Standard dose</div></div></div>
+        </div>
+
+        <div class="alert alert-yellow" style="margin-top:.75rem;font-size:.68rem">
+          <span class="alert-icon">⚠️</span>
+          <span>All doses are guidance only. Adjust for renal impairment, obesity (BMI&gt;35/wt&gt;120 kg), pregnancy, APS. Verify against local formulary before prescribing.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TERMS OF USE OVERLAY ═══ -->
+<div id="tou-overlay" class="tou-overlay">
+  <div class="tou-header">
+    <div class="tou-logo">🫁</div>
+    <div class="tou-title">PE Manager</div>
+    <div class="tou-subtitle">Clinical Decision Support · v1.0 · 2026 AHA/ACC Guidelines</div>
+  </div>
+  <div class="tou-body">
+
+    <div class="alert alert-red" style="margin-bottom:.75rem">
+      <span class="alert-icon">⚠️</span>
+      <span style="font-size:.72rem"><strong>Read carefully before using this tool.</strong> This is a clinical decision support application. It does not replace professional medical judgement, training, or experience.</span>
+    </div>
+
+    <!-- Clinician ToU -->
+    <div class="tou-section">
+      <div class="tou-section-title">👨‍⚕️ Terms of Use for Clinicians</div>
+      <div class="tou-text">
+        <strong>1. Nature of this tool.</strong> PE Manager is a clinical decision support tool based on the 2026 AHA/ACC Acute Pulmonary Embolism Clinical Practice Guidelines. It is intended to assist qualified healthcare professionals in the assessment and management of pulmonary embolism. It is not a substitute for clinical training, experience, or judgement.<br><br>
+        <strong>2. Clinical responsibility.</strong> All clinical decisions remain the sole responsibility of the treating clinician. This application does not make diagnoses or prescribe treatments. Every recommendation presented must be reviewed, verified, and adapted to the individual patient by a qualified clinician.<br><br>
+        <strong>3. Not a regulated medical device.</strong> This tool has not been approved or cleared as a medical device by the MHRA, FDA, CE, or any other regulatory body. It is provided for educational and decision support purposes only.<br><br>
+        <strong>4. Accuracy and currency.</strong> While every effort has been made to ensure accuracy at the time of publication (May 2026), guidelines evolve and local protocols may differ. Always verify doses and recommendations against your institution's current formulary and local guidelines.<br><br>
+        <strong>5. No patient data stored.</strong> This application does not collect, store, or transmit any patient identifiable information. All calculations are performed locally on your device.<br><br>
+        <strong>6. Special populations.</strong> Always exercise heightened caution when using this tool for patients who are pregnant, paediatric (under 18), have severe renal impairment, or have complex comorbidities. This tool is not validated for paediatric use.<br><br>
+        <strong>7. Drug doses.</strong> All drug doses are guidance only. Weight-based calculations are approximate. Always verify doses independently before prescribing, particularly in renal impairment, obesity, pregnancy, and extreme body weights.<br><br>
+        <strong>8. Limitation of liability.</strong> The developers of this application accept no liability for clinical decisions made using this tool. Use of this application constitutes acceptance of full professional responsibility for all clinical decisions made.<br><br>
+        <strong>9. Reporting errors.</strong> If you identify an error or outdated information, please report it using the feedback function within the app. Do not continue to use any section you believe to be inaccurate.
+      </div>
+    </div>
+
+    <!-- Patient ToU -->
+    <div class="tou-section">
+      <div class="tou-section-title">🧑‍🤝‍🧑 Information for Patients</div>
+      <div class="tou-text">
+        <strong>This app is for healthcare professionals only.</strong> If you are a patient or member of the public accessing this tool, please be aware of the following:<br><br>
+        <strong>Not for self-diagnosis.</strong> This tool is not designed for use by patients to assess or manage their own medical conditions. Do not use it to make decisions about your own health or medication.<br><br>
+        <strong>Medical emergency.</strong> If you or someone with you is experiencing a medical emergency — including sudden breathlessness, chest pain, collapse, or rapid heartbeat — call <strong>999 (UK) / 112 (EU) / 911 (US) immediately.</strong><br><br>
+        <strong>Your data.</strong> This application does not collect any personal or identifiable information about patients. No data entered into this app is stored or transmitted anywhere.<br><br>
+        <strong>Questions about your care.</strong> If you have questions about PE treatment you are receiving, please speak directly with your treating doctor or nurse. They are best placed to explain your individual management plan.
+      </div>
+    </div>
+
+    <!-- Data & Privacy -->
+    <div class="tou-section">
+      <div class="tou-section-title">🔒 Data &amp; Privacy</div>
+      <div class="tou-text">
+        <strong>No data collection.</strong> PE Manager does not collect, store, process, or transmit any personal data, patient data, or usage analytics. All computations occur entirely on your local device.<br><br>
+        <strong>Cookies.</strong> This application uses only a single local storage item to record that you have accepted these terms. No tracking cookies are used.<br><br>
+        <strong>GDPR / UK GDPR.</strong> Because no personal data is processed, GDPR obligations do not apply to the current version of this application. If future versions introduce data collection, a full privacy notice will be provided.<br><br>
+        <strong>Third parties.</strong> No data is shared with third parties. The application loads fonts from Google Fonts (googleapis.com) on first load only.
+      </div>
+    </div>
+
+    <!-- Consent checkboxes -->
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace">I confirm that:</div>
+      <div class="tou-checkbox-row" onclick="touCheck(this,'c1')">
+        <div class="chk-box"></div>
+        <div class="tou-checkbox-label">I am a qualified healthcare professional or a student under direct clinical supervision</div>
+      </div>
+      <div class="tou-checkbox-row" onclick="touCheck(this,'c2')">
+        <div class="chk-box"></div>
+        <div class="tou-checkbox-label">I understand this tool does not replace clinical judgement and I remain fully responsible for all clinical decisions</div>
+      </div>
+      <div class="tou-checkbox-row" onclick="touCheck(this,'c3')">
+        <div class="chk-box"></div>
+        <div class="tou-checkbox-label">I will verify all drug doses against my local formulary before prescribing</div>
+      </div>
+      <div class="tou-checkbox-row" onclick="touCheck(this,'c4')">
+        <div class="chk-box"></div>
+        <div class="tou-checkbox-label">I have read and understood the Terms of Use and Data &amp; Privacy sections above</div>
+      </div>
+    </div>
+
+    <div style="font-size:.62rem;color:var(--muted);text-align:center;margin-bottom:.75rem;font-family:'JetBrains Mono',monospace">
+      By tapping Accept, you confirm all statements above and agree to these terms.
+    </div>
+  </div>
+
+  <div class="tou-footer">
+    <button class="tou-accept-btn" id="tou-accept-btn" onclick="acceptTOU()" disabled>
+      Accept &amp; Continue →
+    </button>
+    <div style="font-size:.6rem;color:var(--muted);text-align:center;margin-top:.5rem">
+      PE Manager v1.0 · Last reviewed May 2026 · For educational use only
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FEEDBACK MODAL ═══ -->
+<div id="feedback-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeFeedback()">
+  <div class="modal">
+    <div class="modal-title">📣 Report an Issue / Feedback
+      <div class="modal-close" onclick="closeFeedback()">✕</div>
+    </div>
+    <div style="font-size:.73rem;color:var(--dim);margin-bottom:.75rem;line-height:1.6">Your feedback helps improve this tool and ensures clinical accuracy. All feedback is anonymous.</div>
+    <div style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:.4rem">Type of feedback:</div>
+    <div class="feedback-row">
+      <div class="feedback-chip" onclick="toggleFeedbackChip(this)">🐛 Clinical Error</div>
+      <div class="feedback-chip" onclick="toggleFeedbackChip(this)">💊 Wrong Dose</div>
+      <div class="feedback-chip" onclick="toggleFeedbackChip(this)">📋 Outdated Guideline</div>
+      <div class="feedback-chip" onclick="toggleFeedbackChip(this)">🖥️ App Bug</div>
+      <div class="feedback-chip" onclick="toggleFeedbackChip(this)">💡 Suggestion</div>
+      <div class="feedback-chip" onclick="toggleFeedbackChip(this)">👍 Positive</div>
+    </div>
+    <div style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:.4rem">Details (optional):</div>
+    <textarea class="feedback-input" id="feedback-text" placeholder="Describe the issue or suggestion here..."></textarea>
+    <div style="font-size:.68rem;color:var(--muted);margin-bottom:.6rem;margin-top:.3rem">This app does not currently transmit data. Copy your feedback to send to the development team via the email below.</div>
+    <div class="alert alert-cyan" style="margin-bottom:.75rem"><span class="alert-icon">📧</span><span style="font-size:.72rem">Send feedback to: <strong>pemanager@feedback.app</strong> — include the app version: v1.0</span></div>
+    <button class="btn btn-ghost btn-full" onclick="closeFeedback()">Close</button>
+  </div>
+</div>
+
+<!-- ═══ TERMS MODAL (re-read) ═══ -->
+<div id="terms-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeTermsModal()">
+  <div class="modal">
+    <div class="modal-title">📋 Terms of Use
+      <div class="modal-close" onclick="closeTermsModal()">✕</div>
+    </div>
+    <div class="tou-section" style="margin-bottom:.5rem">
+      <div class="tou-section-title">👨‍⚕️ Clinician Terms (Summary)</div>
+      <div class="tou-text">This tool is for qualified healthcare professionals only. All clinical decisions remain the sole responsibility of the treating clinician. Doses must be verified against local formulary. Not a regulated medical device. No patient data is stored or transmitted. Developers accept no liability for clinical decisions made using this tool.</div>
+    </div>
+    <div class="tou-section" style="margin-bottom:.5rem">
+      <div class="tou-section-title">🧑‍🤝‍🧑 Patient Information</div>
+      <div class="tou-text">This app is for healthcare professionals only. Patients must not use this for self-diagnosis. In an emergency call 999/112/911. No patient data is collected or stored.</div>
+    </div>
+    <div class="tou-section" style="margin-bottom:.75rem">
+      <div class="tou-section-title">🔒 Data &amp; Privacy</div>
+      <div class="tou-text">No personal or patient data is collected, stored, or transmitted. Local storage is used only to save your acceptance of these terms. No tracking or analytics.</div>
+    </div>
+    <button class="btn btn-ghost btn-full" onclick="closeTermsModal()">Close</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══ HOME ═══ -->
+<div id="screen-home" class="screen active">
+  <div class="alert alert-cyan"><span class="alert-icon">ℹ️</span><span><strong>Clinical Decision Support Tool</strong> — 2026 AHA/ACC Acute PE Guidelines. Educational use only. Always apply clinical judgement.</span></div>
+  <div class="sec-title">Quick Actions</div>
+  <div class="card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="goScreen('screen-assess');assessTab('haemo')">
+    <div class="card-title"><span style="font-size:1.3rem">🔴</span> Patient Assessment</div>
+    <div class="card-sub">Haemodynamics → Wells/PERC → Imaging → sPESI → A–E Category → Management</div>
+    <div class="btn btn-primary btn-sm" style="margin-top:.5rem">Start Assessment →</div>
+  </div>
+  <div class="card" style="cursor:pointer;border-left:3px solid var(--yellow)" onclick="goScreen('screen-category')">
+    <div class="card-title"><span style="font-size:1.3rem">📊</span> A–E Category Reference</div>
+    <div class="card-sub">Full 2026 AHA/ACC classification with management plans</div>
+    <div class="btn btn-ghost btn-sm" style="margin-top:.5rem">View Categories →</div>
+  </div>
+  <div class="card" style="cursor:pointer;border-left:3px solid var(--cyan)" onclick="openCalc()">
+    <div class="card-title"><span style="font-size:1.3rem">⚖️</span> Dose Calculator</div>
+    <div class="card-sub">Enter patient weight → get all weight-based doses instantly</div>
+    <div class="btn btn-ghost btn-sm" style="margin-top:.5rem">Open Calculator →</div>
+  </div>
+  <div class="divider"></div>
+  <div class="sec-title">2026 Key Changes</div>
+  <div class="card">
+    <ul class="bullet-list">
+      <li><strong style="color:var(--text)">A–E classification</strong> replaces massive/submassive/low-risk</li>
+      <li><strong style="color:var(--text)">R modifier</strong> for respiratory compromise on any category</li>
+      <li><strong style="color:var(--text)">PERT</strong> upgraded to Class I for Cat C3, D, E</li>
+      <li><strong style="color:var(--text)">DOACs preferred</strong> over warfarin; LMWH over UFH</li>
+      <li><strong style="color:var(--text)">Cat A</strong> (incidental) dischargeable from ED</li>
+    </ul>
+  </div>
+  <div class="disclaimer">FOR EDUCATIONAL USE ONLY · NOT A SUBSTITUTE FOR CLINICAL JUDGEMENT</div>
+</div>
+
+<!-- ═══ ASSESS ═══ -->
+<div id="screen-assess" class="screen">
+  <div class="pill-tabs" id="assess-tabs">
+    <div class="pill-tab active" onclick="assessTab('haemo')">① Haemo</div>
+    <div class="pill-tab" onclick="assessTab('wells')">② Wells/PERC</div>
+    <div class="pill-tab" onclick="assessTab('imaging')">③ Imaging</div>
+    <div class="pill-tab" onclick="assessTab('pesi')">④ sPESI</div>
+    <div class="pill-tab" style="border-color:rgba(255,214,0,.4);color:rgba(255,214,0,.7)" onclick="assessTab('category')">⑤ A–E Category</div>
+    <div class="pill-tab" style="border-color:rgba(0,229,160,.4);color:rgba(0,229,160,.7)" onclick="assessTab('management')">⑥ Management</div>
+  </div>
+
+  <!-- ① HAEMO -->
+  <div id="assess-haemo" class="assess-panel active-panel">
+    <div class="step-nav">
+      <div class="step-indicator">
+        <div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+      </div>
+    </div>
+    <div class="sec-title">Step 1 — Haemodynamic Status</div>
+    <div class="alert alert-red"><span class="alert-icon">⚡</span><span><strong>Check FIRST.</strong> Instability = Category D/E → immediate action. Do not delay for scoring.</span></div>
+    <div class="card">
+      <div class="card-title">Is the patient haemodynamically UNSTABLE?</div>
+      <div class="card-sub">SBP &lt;90 mmHg · Shock · Syncope · Cardiac arrest · Signs of RV failure</div>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <button class="btn btn-red btn-full" onclick="showHaemoResult('unstable')">YES — Unstable</button>
+        <button class="btn btn-green btn-full" onclick="showHaemoResult('stable')">NO — Stable</button>
+      </div>
+    </div>
+    <div id="haemo-result" style="display:none"></div>
+  </div>
+
+  <!-- ② WELLS + PERC -->
+  <div id="assess-wells" class="assess-panel">
+    <div class="step-nav">
+      <div class="back-btn" onclick="assessTab('haemo')">← Back</div>
+      <div class="step-indicator">
+        <div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+      </div>
+    </div>
+    <div class="sec-title">Step 2 — Wells Score &amp; PERC Rule</div>
+    <div style="display:flex;gap:.4rem;margin-bottom:.75rem">
+      <div id="sub-tab-wells" onclick="wellsSubTab('wells')" style="flex:1;text-align:center;padding:.45rem .5rem;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;background:rgba(0,212,255,.1);border:1.5px solid var(--cyan);color:var(--cyan)">📊 Wells Score</div>
+      <div id="sub-tab-perc" onclick="wellsSubTab('perc')" style="flex:1;text-align:center;padding:.45rem .5rem;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;background:transparent;border:1.5px solid var(--border2);color:var(--muted)">🔵 PERC Rule</div>
+    </div>
+    <div id="wells-sub-panel">
+      <div class="check-item" onclick="toggleWells(this,3)"><div class="chk-box"></div><div class="chk-label">Clinical signs/symptoms of DVT</div><div class="chk-score">+3</div></div>
+      <div class="check-item" onclick="toggleWells(this,3)"><div class="chk-box"></div><div class="chk-label">PE is #1 diagnosis OR equally likely</div><div class="chk-score">+3</div></div>
+      <div class="check-item" onclick="toggleWells(this,1.5)"><div class="chk-box"></div><div class="chk-label">Heart rate &gt;100 bpm</div><div class="chk-score">+1.5</div></div>
+      <div class="check-item" onclick="toggleWells(this,1.5)"><div class="chk-box"></div><div class="chk-label">Immobilisation ≥3 days OR surgery in past 4 weeks</div><div class="chk-score">+1.5</div></div>
+      <div class="check-item" onclick="toggleWells(this,1.5)"><div class="chk-box"></div><div class="chk-label">Prior DVT or PE</div><div class="chk-score">+1.5</div></div>
+      <div class="check-item" onclick="toggleWells(this,1)"><div class="chk-box"></div><div class="chk-label">Haemoptysis</div><div class="chk-score">+1</div></div>
+      <div class="check-item" onclick="toggleWells(this,1)"><div class="chk-box"></div><div class="chk-label">Malignancy (on treatment or past 6 months)</div><div class="chk-score">+1</div></div>
+      <div class="result-box cyan" id="wells-result" style="margin-top:.75rem">
+        <div style="display:flex;align-items:center;gap:.75rem;flex:1">
+          <div class="score-circle" id="wells-score-circle" style="border-color:var(--cyan);color:var(--cyan);flex-shrink:0">0</div>
+          <div style="flex:1">
+            <div class="result-title" id="wells-interp" style="color:var(--cyan)">Score: 0</div>
+            <div class="result-sub" id="wells-action">Low probability → Apply PERC Rule</div>
+          </div>
+          <div id="wells-next-arrow" style="color:var(--cyan);font-size:1.3rem;font-weight:700;flex-shrink:0;display:none">›</div>
+        </div>
+        <div id="wells-next-panel" style="display:none;margin-top:.85rem;border-top:1px solid rgba(255,255,255,.08);padding-top:.85rem"></div>
+      </div>
+      <div style="margin-top:.6rem;font-size:.7rem;color:var(--muted);text-align:center;cursor:pointer" onclick="wellsSubTab('perc')">→ Switch to PERC tab to apply checklist</div>
+    </div>
+    <div id="perc-sub-panel" style="display:none">
+      <div class="alert alert-cyan"><span class="alert-icon">ℹ️</span><span style="font-size:.72rem">Tick any criteria that are <strong>PRESENT</strong>. Any ticked → PERC positive → need testing.</span></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Age ≥ 50 years</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Heart rate ≥ 100 bpm</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">SpO₂ &lt; 95% on room air</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Unilateral leg swelling</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Haemoptysis</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Recent surgery or trauma (&lt;4 weeks)</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Prior DVT or PE</div></div>
+      <div class="check-item" onclick="togglePERC_item(this)"><div class="chk-box"></div><div class="chk-label">Oestrogen use (OCP / HRT / pregnancy)</div></div>
+      <div id="perc-result" style="margin-top:.6rem;display:none"></div>
+    </div>
+    <div style="margin-top:.75rem"><button class="btn btn-primary btn-full" onclick="assessTab('imaging')">Next → Imaging Decision ›</button></div>
+  </div>
+
+  <!-- ③ IMAGING -->
+  <div id="assess-imaging" class="assess-panel">
+    <div class="step-nav">
+      <div class="back-btn" onclick="assessTab('wells')">← Back</div>
+      <div class="step-indicator">
+        <div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+      </div>
+    </div>
+    <div class="sec-title">Step 3 — Imaging Decision &amp; Results</div>
+
+    <!-- D-dimer outcome -->
+    <div class="card">
+      <div class="card-title">🧪 D-Dimer Result</div>
+      <div class="card-sub">Use only in low–moderate pre-test probability (Wells ≤4)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <button class="btn btn-green btn-full btn-sm" onclick="imagingResult('ddimer-neg')">✅ D-Dimer NEGATIVE</button>
+        <button class="btn btn-red btn-full btn-sm" onclick="imagingResult('ddimer-pos')">⚠️ D-Dimer POSITIVE</button>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:.5rem .65rem;margin-top:.5rem;display:grid;grid-template-columns:1fr 1fr;gap:.3rem">
+        <div style="font-size:.68rem;color:var(--dim)">Standard cutoff: <span style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-weight:600">&lt;0.5 mg/L</span></div>
+        <div style="font-size:.68rem;color:var(--dim)">Age-adjusted: <span style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-weight:600">Age × 10 µg/L</span></div>
+        <div style="font-size:.68rem;color:var(--dim)">Sensitivity: <span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600">97%</span></div>
+        <div style="font-size:.68rem;color:var(--dim)">NPV: <span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600">~99%</span></div>
+      </div>
+      <div id="ddimer-outcome" style="margin-top:.6rem;display:none"></div>
+    </div>
+
+    <!-- CTPA outcome -->
+    <div class="card">
+      <div class="card-title">🔬 CTPA Result</div>
+      <div class="card-sub">Gold standard · 94% sensitivity · 98% specificity</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <button class="btn btn-green btn-full btn-sm" onclick="imagingResult('ctpa-neg')">✅ CTPA NEGATIVE</button>
+        <button class="btn btn-red btn-full btn-sm" onclick="imagingResult('ctpa-pos')">⚠️ CTPA POSITIVE</button>
+      </div>
+      <div id="ctpa-outcome" style="margin-top:.6rem;display:none"></div>
+    </div>
+
+    <!-- V/Q SPECT -->
+    <div class="card">
+      <div class="card-title">☢️ V/Q SPECT Result</div>
+      <div class="card-sub">Use when CTPA contraindicated · 92% sensitivity · 91% specificity</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <button class="btn btn-green btn-full btn-sm" onclick="imagingResult('vq-neg')">✅ V/Q NEGATIVE</button>
+        <button class="btn btn-red btn-full btn-sm" onclick="imagingResult('vq-pos')">⚠️ V/Q POSITIVE</button>
+      </div>
+      <div id="vq-outcome" style="margin-top:.6rem;display:none"></div>
+    </div>
+  </div>
+
+  <!-- ④ sPESI -->
+  <div id="assess-pesi" class="assess-panel">
+    <div class="step-nav">
+      <div class="back-btn" onclick="assessTab('imaging')">← Back</div>
+      <div class="step-indicator">
+        <div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div>
+      </div>
+    </div>
+    <div class="sec-title">Step 4 — sPESI Score (Post-diagnosis)</div>
+    <div class="alert alert-cyan"><span class="alert-icon">ℹ️</span><span>Use <strong>after PE confirmed</strong>. sPESI feeds directly into A–E category.</span></div>
+    <div class="check-item" onclick="togglePESI(this,1)"><div class="chk-box"></div><div class="chk-label">Age &gt;80 years</div><div class="chk-score">+1</div></div>
+    <div class="check-item" onclick="togglePESI(this,1)"><div class="chk-box"></div><div class="chk-label">Cancer (active malignancy)</div><div class="chk-score">+1</div></div>
+    <div class="check-item" onclick="togglePESI(this,1)"><div class="chk-box"></div><div class="chk-label">Chronic cardiopulmonary disease</div><div class="chk-score">+1</div></div>
+    <div class="check-item" onclick="togglePESI(this,1)"><div class="chk-box"></div><div class="chk-label">Heart rate ≥110 bpm</div><div class="chk-score">+1</div></div>
+    <div class="check-item" onclick="togglePESI(this,1)"><div class="chk-box"></div><div class="chk-label">SBP &lt;100 mmHg</div><div class="chk-score">+1</div></div>
+    <div class="check-item" onclick="togglePESI(this,1)"><div class="chk-box"></div><div class="chk-label">SpO₂ &lt;90%</div><div class="chk-score">+1</div></div>
+    <div class="result-box" id="pesi-result-box" style="margin-top:.75rem;background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.3)">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div class="score-circle" id="pesi-score-circle" style="border-color:var(--green);color:var(--green)">0</div>
+        <div><div class="result-title" id="pesi-interp" style="color:var(--green)">sPESI = 0 — LOW RISK</div><div class="result-sub" id="pesi-action">Likely Category B</div></div>
+      </div>
+    </div>
+    <div style="margin-top:.75rem"><button class="btn btn-primary btn-full" onclick="assessTab('category')">Next → Assign A–E Category ›</button></div>
+  </div>
+
+  <!-- ⑤ A–E CATEGORY WIZARD -->
+  <div id="assess-category" class="assess-panel">
+    <div class="step-nav">
+      <div class="back-btn" onclick="assessTab('pesi')">← Back</div>
+      <div class="step-indicator">
+        <div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div>
+      </div>
+    </div>
+    <div class="sec-title">Step 5 — Assign A–E Category</div>
+    <div class="alert alert-yellow"><span class="alert-icon">📊</span><span style="font-size:.72rem">3 questions → exact AHA/ACC category + full management plan.</span></div>
+
+    <div id="wiz-step1" class="card">
+      <div style="font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Question 1 of 3</div>
+      <div style="font-weight:700;font-size:.92rem;margin-bottom:.25rem">Was PE found incidentally?</div>
+      <div style="font-size:.75rem;color:var(--dim);margin-bottom:.75rem">On CT done for another reason, <strong style="color:var(--text)">no symptoms attributable to PE</strong></div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-full" onclick="wizQ1('yes')" style="border-color:var(--green);color:var(--green)">Yes — Incidental</button>
+        <button class="btn btn-ghost btn-full" onclick="wizQ1('no')">No — Symptomatic</button>
+      </div>
+    </div>
+
+    <div id="wiz-step2" style="display:none">
+      <div class="card">
+        <div style="font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Question 2 of 3 — sPESI</div>
+        <div style="font-weight:700;font-size:.92rem;margin-bottom:.5rem">sPESI Score</div>
+        <div class="check-item" onclick="toggleWizPESI(this)"><div class="chk-box"></div><div class="chk-label">Age &gt;80 years</div><div class="chk-score">+1</div></div>
+        <div class="check-item" onclick="toggleWizPESI(this)"><div class="chk-box"></div><div class="chk-label">Active cancer</div><div class="chk-score">+1</div></div>
+        <div class="check-item" onclick="toggleWizPESI(this)"><div class="chk-box"></div><div class="chk-label">Chronic cardiopulmonary disease</div><div class="chk-score">+1</div></div>
+        <div class="check-item" onclick="toggleWizPESI(this)"><div class="chk-box"></div><div class="chk-label">Heart rate ≥110 bpm</div><div class="chk-score">+1</div></div>
+        <div class="check-item" onclick="toggleWizPESI(this)"><div class="chk-box"></div><div class="chk-label">SBP &lt;100 mmHg</div><div class="chk-score">+1</div></div>
+        <div class="check-item" onclick="toggleWizPESI(this)"><div class="chk-box"></div><div class="chk-label">SpO₂ &lt;90%</div><div class="chk-score">+1</div></div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem;padding:.6rem .75rem;background:var(--s2);border-radius:8px;border:1px solid var(--border)">
+          <div id="wiz-pesi-circle" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--muted);flex-shrink:0">0</div>
+          <div><div id="wiz-pesi-label" style="font-weight:700;font-size:.82rem;color:var(--muted)">sPESI = 0</div><div id="wiz-pesi-sub" style="font-size:.68rem;color:var(--muted)">Tick criteria above</div></div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.6rem">
+          <button class="btn btn-ghost btn-sm" onclick="wizQ1('no-back')" style="flex:0 0 auto">← Back</button>
+          <button class="btn btn-primary btn-full" onclick="wizStep2Next()">Next → RV &amp; Biomarkers ›</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="wiz-step3" style="display:none">
+      <div class="card">
+        <div style="font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Question 3 of 3 — RV &amp; Biomarkers</div>
+        <div style="font-weight:700;font-size:.92rem;margin-bottom:.5rem">Select all that apply</div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem">🫀 Haemodynamics</div>
+        <div class="check-item" id="wiz-arrest" onclick="toggleWizRV(this,'arrest')"><div class="chk-box"></div><div class="chk-label">Cardiac arrest or refractory shock</div></div>
+        <div class="check-item" id="wiz-shock" onclick="toggleWizRV(this,'shock')"><div class="chk-box"></div><div class="chk-label">SBP &lt;90 mmHg / cardiogenic shock</div></div>
+        <div class="check-item" id="wiz-prelactate" onclick="toggleWizRV(this,'prelactate')"><div class="chk-box"></div><div class="chk-label">Rising lactate &gt;2 mmol/L (still normotensive)</div></div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.07em;margin:.6rem 0 .3rem">🫀 RV Dysfunction (Echo/CT)</div>
+        <div class="check-item" id="wiz-rvdys" onclick="toggleWizRV(this,'rvdys')"><div class="chk-box"></div><div class="chk-label">RV/LV ratio &gt;0.9 (echo) or &gt;1.0 (CT)</div></div>
+        <div class="check-item" id="wiz-tapse" onclick="toggleWizRV(this,'tapse')"><div class="chk-box"></div><div class="chk-label">TAPSE &lt;16 mm or McConnell's sign</div></div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.07em;margin:.6rem 0 .3rem">🧪 Biomarkers</div>
+        <div class="check-item" id="wiz-trop" onclick="toggleWizRV(this,'trop')"><div class="chk-box"></div><div class="chk-label">Troponin elevated (TnI &gt;0.1 ng/mL or hs-Tn &gt;14 pg/mL)</div></div>
+        <div class="check-item" id="wiz-bnp" onclick="toggleWizRV(this,'bnp')"><div class="chk-box"></div><div class="chk-label">BNP &gt;100 pg/mL or NT-proBNP &gt;600 pg/mL</div></div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.07em;margin:.6rem 0 .3rem">🫁 Respiratory</div>
+        <div class="check-item" id="wiz-resp" onclick="toggleWizRV(this,'resp')"><div class="chk-box"></div><div class="chk-label">Hypoxia / tachypnoea / escalating O₂ needs</div></div>
+        <div style="display:flex;gap:.5rem;margin-top:.75rem">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wiz-step3').style.display='none';document.getElementById('wiz-step2').style.display='block'" style="flex:0 0 auto">← Back</button>
+          <button class="btn btn-primary btn-full" onclick="wizCalculate()">🎯 Calculate Category ›</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="wiz-result" style="display:none;margin-top:.75rem"></div>
+    <div id="wiz-reset-btn" style="display:none;margin-top:.5rem">
+      <button class="btn btn-ghost btn-full btn-sm" onclick="wizReset()">↺ Start Over</button>
+    </div>
+  </div>
+
+  <!-- ⑥ MANAGEMENT -->
+  <div id="assess-management" class="assess-panel">
+    <div class="step-nav">
+      <div class="back-btn" onclick="assessTab('category')">← Back</div>
+      <div class="step-indicator">
+        <div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div>
+      </div>
+    </div>
+    <div class="sec-title">Step 6 — Management Plan</div>
+    <div id="mgmt-content">
+      <div class="alert alert-yellow"><span class="alert-icon">📋</span><span style="font-size:.72rem">Complete Step 5 (A–E Category) first to load the management plan for your patient.</span></div>
+      <button class="btn btn-ghost btn-full" onclick="assessTab('category')">← Go to Category Assignment</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ CATEGORY REFERENCE ═══ -->
+<div id="screen-category" class="screen">
+  <div class="sec-title">A–E Category Reference</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+    <div class="cat-card" onclick="showCat('A')" style="background:var(--s2);border:1px solid rgba(0,229,160,.3);border-radius:10px;padding:.75rem;cursor:pointer">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--green)">A</div><div style="font-size:.7rem;font-weight:600;color:var(--green)">Subclinical</div><div style="font-size:.65rem;color:var(--dim)">Incidental · Asymptomatic</div></div>
+    <div onclick="showCat('B')" style="background:var(--s2);border:1px solid rgba(0,212,255,.3);border-radius:10px;padding:.75rem;cursor:pointer">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--cyan)">B</div><div style="font-size:.7rem;font-weight:600;color:var(--cyan)">Low Severity</div><div style="font-size:.65rem;color:var(--dim)">sPESI 0 · No RV dysfn</div></div>
+    <div onclick="showCat('C')" style="background:var(--s2);border:1px solid rgba(255,214,0,.3);border-radius:10px;padding:.75rem;cursor:pointer">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">C</div><div style="font-size:.7rem;font-weight:600;color:var(--yellow)">Elevated Severity</div><div style="font-size:.65rem;color:var(--dim)">sPESI ≥1 · C1/C2/C3</div></div>
+    <div onclick="showCat('D')" style="background:var(--s2);border:1px solid rgba(255,140,0,.3);border-radius:10px;padding:.75rem;cursor:pointer">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--orange)">D</div><div style="font-size:.7rem;font-weight:600;color:var(--orange)">Incipient Failure</div><div style="font-size:.65rem;color:var(--dim)">Pre-shock · ↑ lactate</div></div>
+  </div>
+  <div onclick="showCat('E')" style="background:var(--s2);border:1px solid rgba(255,68,68,.3);border-radius:10px;padding:.75rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+    <div style="font-size:1.8rem;font-weight:800;color:var(--red)">E</div>
+    <div><div style="font-size:.7rem;font-weight:600;color:var(--red)">Cardiopulmonary Failure</div><div style="font-size:.65rem;color:var(--dim)">E1: Shock · E2: Arrest / refractory failure</div></div>
+  </div>
+  <div id="cat-detail" style="display:none;margin-top:.5rem"></div>
+  <div class="card"><div style="font-weight:700;font-size:.8rem;color:var(--purple);margin-bottom:.35rem">R Modifier</div><div style="font-size:.73rem;color:var(--dim);line-height:1.6">Append <span class="chip chip-purple">R</span> to any category when hypoxia/tachypnoea/↑O₂ present. Does not change letter — forces higher monitoring and prevents early discharge.</div></div>
+</div>
+
+<!-- ═══ DRUGS ═══ -->
+<div id="screen-drugs" class="screen">
+  <div class="pill-tabs">
+    <div class="pill-tab active" onclick="drugTab('par',this)">Parenteral</div>
+    <div class="pill-tab" onclick="drugTab('doac',this)">DOACs</div>
+    <div class="pill-tab" onclick="drugTab('lytic',this)">Thrombolytics</div>
+    <div class="pill-tab" onclick="drugTab('special',this)">Special Pop.</div>
+  </div>
+  <div id="drug-par">
+    <div class="alert alert-green"><span class="alert-icon">✅</span><span><strong>LMWH preferred over UFH</strong> (Class I · 2026). UFH for: CrCl &lt;30, pre-thrombolysis, instability.</span></div>
+    <div class="dose-card"><div class="dose-drug">Enoxaparin <span class="chip chip-green" style="font-size:.58rem">PREFERRED</span></div><div class="dose-class">LMWH · SC</div>
+      <div class="dose-row"><div class="dose-phase">Treatment q12h</div><div class="dose-val">1 mg/kg SC<span class="dose-note">cap 120 mg/dose</span></div></div>
+      <div class="dose-row"><div class="dose-phase">Treatment q24h</div><div class="dose-val">1.5 mg/kg SC<span class="dose-note">cap 180 mg</span></div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Anti-Xa target (if needed)</div><div class="dose-val">0.6–1.0 IU/mL<span class="dose-note">4h post-dose</span></div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">UFH</div><div class="dose-class">Unfractionated heparin · IV</div>
+      <div class="dose-row"><div class="dose-phase">Bolus</div><div class="dose-val">80 U/kg IV<span class="dose-note">max 10,000 U</span></div></div>
+      <div class="dose-row"><div class="dose-phase">Infusion</div><div class="dose-val">18 U/kg/hr</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Target aPTT</div><div class="dose-val">60–80 sec</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Fondaparinux</div><div class="dose-class">Selective anti-Xa · SC OD</div>
+      <div class="dose-row"><div class="dose-phase">&lt;50 / 50–100 / &gt;100 kg</div><div class="dose-val">5 / 7.5 / 10 mg</div></div>
+    </div>
+    <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="openCalc()">⚖️ Open Dose Calculator</button>
+  </div>
+  <div id="drug-doac" style="display:none">
+    <div class="alert alert-green"><span class="alert-icon">✅</span><span><strong>DOACs preferred</strong> (Class I). Rivaroxaban &amp; apixaban: no bridging. Edoxaban &amp; dabigatran: 5–10d parenteral first.</span></div>
+    <div class="dose-card"><div class="dose-drug">Rivaroxaban <span class="chip chip-green" style="font-size:.58rem">No bridging</span></div>
+      <div class="dose-row"><div class="dose-phase">Wk 1–3 (loading)</div><div class="dose-val">15 mg BD<span class="dose-note">with food</span></div></div>
+      <div class="dose-row"><div class="dose-phase">Wk 4+ maintenance</div><div class="dose-val">20 mg OD</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Extended (&gt;6 months)</div><div class="dose-val">10 mg OD</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Apixaban <span class="chip chip-green" style="font-size:.58rem">No bridging</span></div>
+      <div class="dose-row"><div class="dose-phase">Day 1–7 (loading)</div><div class="dose-val">10 mg BD</div></div>
+      <div class="dose-row"><div class="dose-phase">Day 8+ maintenance</div><div class="dose-val">5 mg BD</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Extended (&gt;6 months)</div><div class="dose-val">2.5 mg BD</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Edoxaban <span class="chip chip-orange" style="font-size:.58rem">Bridging needed</span></div>
+      <div class="dose-row"><div class="dose-phase">Standard</div><div class="dose-val">60 mg OD</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">CrCl 30–50 or wt ≤60 kg</div><div class="dose-val">30 mg OD</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Dabigatran <span class="chip chip-orange" style="font-size:.58rem">Bridging needed</span></div>
+      <div class="dose-row"><div class="dose-phase">Standard</div><div class="dose-val">150 mg BD</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Reversal</div><div class="dose-val">Idarucizumab</div></div>
+    </div>
+  </div>
+  <div id="drug-lytic" style="display:none">
+    <div class="alert alert-red"><span class="alert-icon">🚨</span><span><strong>PERT required</strong> before thrombolysis (Class I for Cat E, IIa for Cat C3/D).</span></div>
+    <div class="dose-card"><div class="dose-drug">Alteplase (tPA)</div><div class="dose-class">FDA-approved for PE</div>
+      <div class="dose-row"><div class="dose-phase">Full dose (Cat E)</div><div class="dose-val">100 mg / 2h</div></div>
+      <div class="dose-row"><div class="dose-phase">Half-dose (Cat C3/D)</div><div class="dose-val">50 mg / 2h</div></div>
+      <div class="dose-row"><div class="dose-phase">Cardiac arrest bolus</div><div class="dose-val">50 mg rapid IV</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">CDT (via catheter)</div><div class="dose-val">1–2 mg/hr × 12–24h</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Tenecteplase (TNK)</div><div class="dose-class">Off-label for PE · Weight-based bolus</div>
+      <div class="dose-row"><div class="dose-phase">&lt;60 / 60–69 / 70–79 kg</div><div class="dose-val">30 / 35 / 40 mg</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">80–89 / ≥90 kg</div><div class="dose-val">45 / 50 mg max</div></div>
+    </div>
+    <div class="alert alert-red" style="margin-top:.5rem"><span class="alert-icon">⛔</span><span><strong>Absolute CI:</strong> Haemorrhagic stroke (ever) · Ischaemic stroke &lt;3m · CNS neoplasm · Active bleeding · Major surgery &lt;3wks · Aortic dissection · SBP &gt;185 mmHg</span></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="openCalc()">⚖️ Open Dose Calculator</button>
+  </div>
+  <div id="drug-special" style="display:none">
+    <div class="dose-card"><div class="dose-drug">🤰 Pregnancy</div><div class="dose-class">DOACs CI · Warfarin avoid 1st/3rd trimester</div>
+      <div class="dose-row"><div class="dose-phase">Preferred</div><div class="dose-val">Enoxaparin 1 mg/kg q12h</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Near delivery</div><div class="dose-val">Switch to UFH</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">🫘 CKD (CrCl &lt;30)</div><div class="dose-class">LMWH / fondaparinux / dabigatran — avoid</div>
+      <div class="dose-row"><div class="dose-phase">Preferred</div><div class="dose-val">UFH IV</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Oral option</div><div class="dose-val">Warfarin INR 2–3</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">🦀 Cancer PE</div><div class="dose-class">DOACs preferred now · Dalteparin if GI/GU cancer</div>
+      <div class="dose-row"><div class="dose-phase">Preferred DOAC</div><div class="dose-val">Rivaroxaban / Apixaban</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Duration</div><div class="dose-val">Indefinite while active</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">🛡️ APS (Triple-positive)</div><div class="dose-class">DOACs inferior — TRAPS trial</div>
+      <div class="dose-row"><div class="dose-phase">Preferred</div><div class="dose-val">Warfarin INR 2–3</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">High-risk / recurrent</div><div class="dose-val">INR 2.5–3.5</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TESTS ═══ -->
+<div id="screen-tests" class="screen">
+  <div class="pill-tabs">
+    <div class="pill-tab active" onclick="testTab('bio',this)">Biomarkers</div>
+    <div class="pill-tab" onclick="testTab('img',this)">Echo/CT</div>
+    <div class="pill-tab" onclick="testTab('ecg',this)">ECG</div>
+  </div>
+  <div id="test-bio">
+    <div class="dose-card"><div class="dose-drug">D-dimer</div>
+      <div class="dose-row"><div class="dose-phase">Standard cutoff</div><div class="dose-val">&lt;0.5 mg/L</div></div>
+      <div class="dose-row"><div class="dose-phase">Age-adjusted (&gt;50)</div><div class="dose-val">Age × 10 µg/L</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Sensitivity / NPV</div><div class="dose-val">97% / ~99%</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Troponin</div>
+      <div class="dose-row"><div class="dose-phase">Conventional TnI</div><div class="dose-val">&gt;0.1 ng/mL = abnormal</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">hs-Tn safe threshold</div><div class="dose-val">&lt;14 pg/mL = NPV 98%</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">BNP / NT-proBNP</div>
+      <div class="dose-row"><div class="dose-phase">BNP cutoff</div><div class="dose-val">&gt;100 pg/mL</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">NT-proBNP cutoff</div><div class="dose-val">&gt;600 pg/mL</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">Lactate</div>
+      <div class="dose-row"><div class="dose-phase">Elevated</div><div class="dose-val">&gt;2 mmol/L</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Shock / Cat D–E trigger</div><div class="dose-val">&gt;4 mmol/L</div></div>
+    </div>
+  </div>
+  <div id="test-img" style="display:none">
+    <div class="dose-card"><div class="dose-drug">RV/LV Ratio</div>
+      <div class="dose-row"><div class="dose-phase">Abnormal Echo / CT</div><div class="dose-val">&gt;0.9 / &gt;1.0</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Mortality risk if abnormal</div><div class="dose-val">2.5× all-cause ↑</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">TAPSE</div>
+      <div class="dose-row"><div class="dose-phase">RV dysfunction threshold</div><div class="dose-val">&lt;16 mm</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Sensitivity / Specificity</div><div class="dose-val">72% / 66%</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">McConnell's Sign</div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Sensitivity / Specificity</div><div class="dose-val">~77% / ~94%</div></div>
+    </div>
+  </div>
+  <div id="test-ecg" style="display:none">
+    <div class="alert alert-yellow"><span class="alert-icon">⚠️</span><span><strong>ECG not sensitive/specific for PE.</strong> Normal ECG in ~30% of PE cases.</span></div>
+    <div class="dose-card"><div class="dose-drug">S1Q3T3</div><div class="dose-row"><div class="dose-phase">Sensitivity / Specificity</div><div class="dose-val">~20% / ~85%</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Frequency in PE</div><div class="dose-val">12–30%</div></div></div>
+    <div class="dose-card"><div class="dose-drug">T-wave inversions V1–V4</div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Sensitivity / Specificity</div><div class="dose-val">26–34% / 70–80%</div></div></div>
+    <div class="dose-card"><div class="dose-drug">QR in V1</div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Sensitivity / Specificity</div><div class="dose-val">19% / ~100%</div></div></div>
+  </div>
+</div>
+
+
+<!-- ═══ REVERSAL SCREEN ═══ -->
+<div id="screen-reversal" class="screen">
+  <div class="sec-title">Anticoagulation Reversal — Bleeding Management</div>
+  <div class="alert alert-red"><span class="alert-icon">🚨</span><span><strong>Major bleeding on anticoagulation is a medical emergency.</strong> Stop anticoagulant. Establish IV access. Call haematology. Assess for source of bleeding.</span></div>
+
+  <div class="pill-tabs">
+    <div class="pill-tab active" onclick="revTab('agents',this)">Reversal Agents</div>
+    <div class="pill-tab" onclick="revTab('approach',this)">Approach</div>
+    <div class="pill-tab" onclick="revTab('restartac',this)">Restarting AC</div>
+  </div>
+
+  <div id="rev-agents">
+    <div class="reversal-drug">
+      <div class="reversal-name">Andexanet Alfa <span class="chip chip-green" style="font-size:.6rem">Anti-Xa reversal</span></div>
+      <div class="reversal-class">Reverses: Rivaroxaban · Apixaban · Edoxaban</div>
+      <div class="dose-row"><div class="dose-phase">Rivaroxaban/Apixaban: Low dose</div><div class="dose-val">400 mg bolus + 480 mg/2h</div></div>
+      <div class="dose-row"><div class="dose-phase">Rivaroxaban/Apixaban: High dose</div><div class="dose-val">800 mg bolus + 960 mg/2h</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Timing</div><div class="dose-val">Low if &gt;8h since last dose</div></div>
+    </div>
+    <div class="reversal-drug">
+      <div class="reversal-name">Idarucizumab (Praxbind) <span class="chip chip-green" style="font-size:.6rem">Dabigatran reversal</span></div>
+      <div class="reversal-class">Reverses: Dabigatran only · Specific antidote</div>
+      <div class="dose-row"><div class="dose-phase">Dose</div><div class="dose-val">5 g IV (2 × 2.5 g)</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Administration</div><div class="dose-val">Two 2.5 g vials IV over 5–10 min</div></div>
+    </div>
+    <div class="reversal-drug">
+      <div class="reversal-name">Protamine Sulphate <span class="chip chip-cyan" style="font-size:.6rem">Heparin reversal</span></div>
+      <div class="reversal-class">Reverses: UFH (full) · LMWH (partial ~60–80%)</div>
+      <div class="dose-row"><div class="dose-phase">UFH reversal</div><div class="dose-val">1 mg per 100 U UFH given in last 2h</div></div>
+      <div class="dose-row"><div class="dose-phase">Enoxaparin reversal</div><div class="dose-val">1 mg per 1 mg enoxaparin (if &lt;8h since dose)</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Maximum single dose</div><div class="dose-val">50 mg IV over 10 min</div></div>
+    </div>
+    <div class="reversal-drug">
+      <div class="reversal-name">4-Factor PCC (Beriplex / Octaplex) <span class="chip chip-yellow" style="font-size:.6rem">Warfarin reversal</span></div>
+      <div class="reversal-class">Reverses: Warfarin · Also used for DOAC life-threatening bleed if specific antidote unavailable</div>
+      <div class="dose-row"><div class="dose-phase">INR 2.0–3.9</div><div class="dose-val">25 IU/kg IV</div></div>
+      <div class="dose-row"><div class="dose-phase">INR 4.0–6.0</div><div class="dose-val">35 IU/kg IV</div></div>
+      <div class="dose-row"><div class="dose-phase">INR &gt;6.0</div><div class="dose-val">50 IU/kg IV</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Plus Vitamin K</div><div class="dose-val">5–10 mg IV</div></div>
+    </div>
+    <div class="reversal-drug">
+      <div class="reversal-name">Tranexamic Acid <span class="chip chip-purple" style="font-size:.6rem">Adjunct haemostatic</span></div>
+      <div class="reversal-class">Antifibrinolytic · Adjunct in major haemorrhage</div>
+      <div class="dose-row"><div class="dose-phase">Loading dose</div><div class="dose-val">1 g IV over 10 min</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Maintenance</div><div class="dose-val">1 g IV over 8h</div></div>
+    </div>
+  </div>
+
+  <div id="rev-approach" style="display:none">
+    <div class="card">
+      <div class="card-title">Major Bleeding Protocol</div>
+      <div class="mgmt-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Stop anticoagulant immediately</div><div class="step-detail">Document last dose, time, and drug. Do not give next dose.</div></div></div>
+      <div class="mgmt-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Activate major haemorrhage protocol</div><div class="step-detail">Call haematology on call. Alert transfusion. Establish large-bore IV access ×2.</div></div></div>
+      <div class="mgmt-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Bloods urgently</div><div class="step-detail">FBC, coagulation screen (PT, APTT, fibrinogen), anti-Xa level (if LMWH/DOAC), dabigatran level (if applicable), group &amp; save.</div></div></div>
+      <div class="mgmt-step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Identify bleeding source</div><div class="step-detail">GI: endoscopy. Surgical: return to theatre. ICH: immediate CT head + neurosurgical referral.</div></div></div>
+      <div class="mgmt-step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Administer specific reversal agent</div><div class="step-detail">DOAC (anti-Xa): Andexanet alfa. Dabigatran: Idarucizumab. UFH/LMWH: Protamine. Warfarin: 4F-PCC + Vit K.</div></div></div>
+      <div class="mgmt-step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Supportive care</div><div class="step-detail">Transfuse pRBCs if Hb falling / haemodynamically unstable. FFP if coagulopathic. Platelets if &lt;50. Fibrinogen if &lt;1.5 g/L.</div></div></div>
+    </div>
+    <div class="alert alert-yellow"><span class="alert-icon">⚠️</span><span style="font-size:.72rem"><strong>Critical tradeoff:</strong> Reversing anticoagulation increases risk of PE recurrence / thrombotic complications. Always discuss with haematology whether reversal is truly needed vs. temporary hold for minor bleeding.</span></div>
+  </div>
+
+  <div id="rev-restartac" style="display:none">
+    <div class="card">
+      <div class="card-title">When to Restart Anticoagulation Post-Bleed</div>
+      <div class="card-sub">Requires multidisciplinary decision: haematology + source-specific specialist + clinical team</div>
+      <div class="dose-row"><div class="dose-phase">Minor bleed (e.g. epistaxis, minor wound)</div><div class="dose-val">Resume same day or next day</div></div>
+      <div class="dose-row"><div class="dose-phase">GI bleed (post-endoscopic haemostasis)</div><div class="dose-val">Restart 7–14 days</div></div>
+      <div class="dose-row"><div class="dose-phase">Intracranial haemorrhage</div><div class="dose-val">4–8 weeks min · MDT decision</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Post-surgical bleed</div><div class="dose-val">24–48h after haemostasis confirmed</div></div>
+    </div>
+    <div class="alert alert-red"><span class="alert-icon">🧠</span><span style="font-size:.72rem">After ICH: weigh PE recurrence risk vs. rebleeding risk individually. No universal rule. Haematology + neurosurgery decision.</span></div>
+  </div>
+</div>
+
+<!-- ═══ POST-PE FOLLOW-UP SCREEN ═══ -->
+<div id="screen-followup" class="screen">
+  <div class="sec-title">Post-PE Follow-Up &amp; Long-Term Management</div>
+  <div class="alert alert-cyan"><span class="alert-icon">📅</span><span>This section guides management after the acute phase is resolved and the patient is stable on anticoagulation.</span></div>
+
+  <div class="pill-tabs">
+    <div class="pill-tab active" onclick="fuTab('timeline',this)">Timeline</div>
+    <div class="pill-tab" onclick="fuTab('duration',this)">AC Duration</div>
+    <div class="pill-tab" onclick="fuTab('cteph',this)">CTEPH Screen</div>
+    <div class="pill-tab" onclick="fuTab('thrombophilia',this)">Thrombophilia</div>
+  </div>
+
+  <div id="fu-timeline">
+    <div class="dose-card"><div class="dose-drug">Discharge</div>
+      <div class="dose-row"><div class="dose-phase">Anticoagulation started</div><div class="dose-val">Yes — confirm before discharge</div></div>
+      <div class="dose-row"><div class="dose-phase">Patient education</div><div class="dose-val">Signs of bleeding, PE recurrence, compliance</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Written information</div><div class="dose-val">Anticoagulation booklet + emergency card</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">1–2 Weeks (Cat A/B) · 5–7 Days (Cat B)</div>
+      <div class="dose-row"><div class="dose-phase">Review</div><div class="dose-val">Compliance, bleeding, renal function</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Bloods</div><div class="dose-val">FBC, U&amp;E, LFTs baseline</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">3 Months</div>
+      <div class="dose-row"><div class="dose-phase">Duration decision</div><div class="dose-val">Provoked → consider stopping · Unprovoked → reassess</div></div>
+      <div class="dose-row"><div class="dose-phase">Thrombophilia screen</div><div class="dose-val">If indicated (see Thrombophilia tab)</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Symptom review</div><div class="dose-val">Persistent dyspnoea? → CTEPH screen</div></div>
+    </div>
+    <div class="dose-card"><div class="dose-drug">6 Months</div>
+      <div class="dose-row"><div class="dose-phase">Echo</div><div class="dose-val">If dyspnoea persists → exclude CTEPH</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Malignancy screen</div><div class="dose-val">If unprovoked — CT CAP, PSA/CA125</div></div>
+    </div>
+  </div>
+
+  <div id="fu-duration" style="display:none">
+    <div class="card">
+      <div class="card-title">Duration of Anticoagulation</div>
+      <div class="card-sub">Decision based on provoking factor, recurrence risk, and bleeding risk</div>
+      <div class="dose-row"><div class="dose-phase">Provoked by major transient risk factor (surgery, trauma, hospitalisation)</div><div class="dose-val">3 months</div></div>
+      <div class="dose-row"><div class="dose-phase">Provoked by minor transient risk factor (pill, travel, minor illness)</div><div class="dose-val">3 months minimum · reassess</div></div>
+      <div class="dose-row"><div class="dose-phase">First unprovoked PE</div><div class="dose-val">≥3 months · consider indefinite if bleed risk low</div></div>
+      <div class="dose-row"><div class="dose-phase">Recurrent unprovoked VTE</div><div class="dose-val">Indefinite</div></div>
+      <div class="dose-row"><div class="dose-phase">Active cancer</div><div class="dose-val">Indefinite while cancer active/on treatment</div></div>
+      <div class="dose-row"><div class="dose-phase">APS (antiphospholipid syndrome)</div><div class="dose-val">Indefinite · Warfarin preferred</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Extended therapy agent</div><div class="dose-val">Rivaroxaban 10 mg OD or Apixaban 2.5 mg BD</div></div>
+    </div>
+    <div class="alert alert-yellow" style="margin-top:.5rem"><span class="alert-icon">⚖️</span><span style="font-size:.72rem">Use HAS-BLED or VTE-BLEED score to assess bleeding risk before committing to indefinite anticoagulation. Reassess annually.</span></div>
+  </div>
+
+  <div id="fu-cteph" style="display:none">
+    <div class="card">
+      <div class="card-title">CTEPH — Chronic Thromboembolic Pulmonary Hypertension</div>
+      <div class="card-sub">Occurs in ~3–5% of PE survivors. Often underdiagnosed.</div>
+      <div class="dose-row"><div class="dose-phase">Screen if</div><div class="dose-val">Persistent dyspnoea at 3–6 months</div></div>
+      <div class="dose-row"><div class="dose-phase">First investigation</div><div class="dose-val">Echo: sPAP &gt;40 mmHg suggests PH</div></div>
+      <div class="dose-row"><div class="dose-phase">Confirmatory</div><div class="dose-val">V/Q SPECT + right heart catheterisation</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">Referral</div><div class="dose-val">Pulmonary hypertension specialist centre</div></div>
+    </div>
+    <div class="alert alert-cyan"><span class="alert-icon">🏥</span><span style="font-size:.72rem">CTEPH is potentially surgically curable (pulmonary endarterectomy). Early referral to a specialist centre is critical — do not miss this diagnosis.</span></div>
+  </div>
+
+  <div id="fu-thrombophilia" style="display:none">
+    <div class="card">
+      <div class="card-title">Thrombophilia Screening — When and What</div>
+      <div class="card-sub">Performs best when done ≥3 months after acute event and off anticoagulation</div>
+      <div class="dose-row"><div class="dose-phase">Indicate if</div><div class="dose-val">Unprovoked VTE, age &lt;50, family history, recurrent VTE, unusual site</div></div>
+      <div class="dose-row"><div class="dose-phase">Lupus anticoagulant</div><div class="dose-val">Do NOT test on anticoagulation — false positives</div></div>
+      <div class="dose-row"><div class="dose-phase">Factor V Leiden / Prothrombin gene</div><div class="dose-val">Can be tested on anticoagulation (genetic)</div></div>
+      <div class="dose-row"><div class="dose-phase">Protein C, S, Antithrombin</div><div class="dose-val">Test 3 months OFF anticoagulation</div></div>
+      <div class="dose-row" style="border-bottom:none"><div class="dose-phase">APS panel (triple-positive)</div><div class="dose-val">LA + aCL + anti-β2GPI (repeat at 12 weeks to confirm)</div></div>
+    </div>
+    <div class="alert alert-yellow"><span class="alert-icon">⚠️</span><span style="font-size:.72rem">A negative thrombophilia screen does NOT exclude inherited thrombophilia. Genetic testing covers only common variants. Refer to haematology for complex cases.</span></div>
+  </div>
+</div>
+
+<!-- ═══ ABOUT SCREEN ═══ -->
+<div id="screen-about" class="screen">
+  <div class="sec-title">About PE Manager</div>
+
+  <div class="card" style="text-align:center;padding:1.25rem">
+    <div style="font-size:2.5rem;margin-bottom:.5rem">🫁</div>
+    <div style="font-weight:800;font-size:1.2rem;color:var(--cyan)">PE Manager</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Clinical Decision Support</div>
+    <div style="margin-top:.6rem;display:flex;justify-content:center;gap:.4rem;flex-wrap:wrap">
+      <span class="version-badge">v1.0</span>
+      <span class="version-badge">May 2026</span>
+      <span class="chip chip-green">2026 AHA/ACC</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚕️ Clinical Basis</div>
+    <div class="card-sub">This application is based on:</div>
+    <div class="ref-item"><span class="ref-num">[1]</span>2026 AHA/ACC/ACCP/ACEP Clinical Practice Guideline for the Diagnosis and Management of Acute Pulmonary Embolism — First dedicated AHA/ACC guideline for PE</div>
+    <div class="ref-item"><span class="ref-num">[2]</span>2019 ESC Guidelines on Acute Pulmonary Embolism (Konstantinides SV et al., Eur Heart J 2020)</div>
+    <div class="ref-item"><span class="ref-num">[3]</span>AMPLIFY trial — Apixaban for VTE (Agnelli G et al., NEJM 2013)</div>
+    <div class="ref-item"><span class="ref-num">[4]</span>EINSTEIN-PE trial — Rivaroxaban for PE (EINSTEIN Investigators, NEJM 2012)</div>
+    <div class="ref-item"><span class="ref-num">[5]</span>Hokusai-VTE trial — Edoxaban for VTE (Büller HR et al., NEJM 2013)</div>
+    <div class="ref-item"><span class="ref-num">[6]</span>CLOT trial — Dalteparin in cancer VTE (Lee AY et al., NEJM 2003)</div>
+    <div class="ref-item"><span class="ref-num">[7]</span>TRAPS trial — Rivaroxaban vs Warfarin in APS (Pengo V et al., NEJM 2018)</div>
+    <div class="ref-item"><span class="ref-num">[8]</span>PIOPED II — CTPA diagnostic accuracy (Stein PD et al., NEJM 2006)</div>
+    <div class="ref-item"><span class="ref-num">[9]</span>Wells PE Score (Wells PS et al., Ann Intern Med 2001)</div>
+    <div class="ref-item"><span class="ref-num">[10]</span>PERC Rule (Kline JA et al., J Thromb Haemost 2004)</div>
+    <div class="ref-item"><span class="ref-num">[11]</span>sPESI (Jiménez D et al., Eur Respir J 2010)</div>
+    <div class="ref-item"><span class="ref-num">[12]</span>Hestia Criteria (Zondag W et al., J Thromb Haemost 2011)</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚠️ Limitations</div>
+    <ul class="bullet-list">
+      <li>This tool has not undergone formal clinical validation studies</li>
+      <li>Not approved as a regulated medical device (MHRA / FDA / CE)</li>
+      <li>Not validated for paediatric patients (under 18)</li>
+      <li>Dose calculations are guidance only — always verify locally</li>
+      <li>Guidelines evolve — check for app updates regularly</li>
+      <li>Local protocols may differ from 2026 AHA/ACC recommendations</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Legal &amp; Compliance</div>
+    <div style="display:flex;flex-direction:column;gap:.4rem;margin-top:.15rem">
+      <button class="btn btn-ghost btn-full btn-sm" onclick="openTermsModal()">📋 View Full Terms of Use</button>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="openFeedback()">📣 Report an Issue / Feedback</button>
+      <button class="btn btn-ghost btn-full btn-sm" style="border-color:rgba(255,68,68,.3);color:var(--red)" onclick="resetTOU()">↺ Reset Consent (re-read Terms)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📞 PERT / Emergency Contacts</div>
+    <div class="card-sub">Update these with your local team numbers</div>
+    <div class="pert-contact-btn" onclick="alert('Update with your local PERT number')">
+      <div style="font-size:1.2rem">🚨</div>
+      <div><div style="font-weight:700;font-size:.85rem;color:var(--red)">PERT On-Call</div><div style="font-size:.7rem;color:var(--dim)">Tap to set your local PERT number</div></div>
+    </div>
+    <div class="pert-contact-btn" style="border-color:rgba(255,140,0,.4);background:rgba(255,140,0,.08)" onclick="alert('Update with your local haematology number')">
+      <div style="font-size:1.2rem">🔴</div>
+      <div><div style="font-weight:700;font-size:.85rem;color:var(--orange)">Haematology On-Call</div><div style="font-size:.7rem;color:var(--dim)">Tap to set your local haematology number</div></div>
+    </div>
+    <div class="pert-contact-btn" style="border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.07)" onclick="alert('Update with your local cardiology number')">
+      <div style="font-size:1.2rem">💙</div>
+      <div><div style="font-weight:700;font-size:.85rem;color:var(--cyan)">Cardiology / ECMO</div><div style="font-size:.7rem;color:var(--dim)">Tap to set your local number</div></div>
+    </div>
+  </div>
+
+  <div class="disclaimer" style="margin-bottom:1rem">
+    PE Manager v1.0 · Last updated May 2026<br>
+    Based on 2026 AHA/ACC Acute PE Guidelines<br>
+    FOR EDUCATIONAL USE ONLY · NOT A REGULATED MEDICAL DEVICE<br>
+    Not validated for paediatric use · Always verify doses locally
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div class="bottom-nav" style="grid-template-columns:repeat(5,1fr)">
+  <button class="nav-btn active" onclick="goScreen('screen-home');setActive(this)"><div class="nav-icon">🏠</div><div class="nav-label">Home</div><div class="nav-dot"></div></button>
+  <button class="nav-btn" onclick="goScreen('screen-assess');setActive(this)"><div class="nav-icon">🩺</div><div class="nav-label">Assess</div><div class="nav-dot"></div></button>
+  <button class="nav-btn" onclick="goScreen('screen-category');setActive(this)"><div class="nav-icon">📊</div><div class="nav-label">A–E</div><div class="nav-dot"></div></button>
+  <button class="nav-btn" onclick="goScreen('screen-drugs');setActive(this)"><div class="nav-icon">💊</div><div class="nav-label">Drugs</div><div class="nav-dot"></div></button>
+  <button class="nav-btn" onclick="openMoreMenu()" id="more-nav-btn"><div class="nav-icon">⋯</div><div class="nav-label">More</div><div class="nav-dot"></div></button>
+</div>
+
+<!-- More menu modal -->
+<div id="more-menu" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeMoreMenu()">
+  <div class="modal" style="border-radius:20px 20px 0 0">
+    <div class="modal-title" style="font-size:.85rem;color:var(--muted)">More
+      <div class="modal-close" onclick="closeMoreMenu()">✕</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+      <button class="btn btn-ghost" style="flex-direction:column;gap:.3rem;padding:.75rem;height:70px" onclick="closeMoreMenu();goScreen('screen-tests')"><div style="font-size:1.3rem">🧪</div><div style="font-size:.68rem">Tests</div></button>
+      <button class="btn btn-ghost" style="flex-direction:column;gap:.3rem;padding:.75rem;height:70px" onclick="closeMoreMenu();goScreen('screen-reversal')"><div style="font-size:1.3rem">🩸</div><div style="font-size:.68rem">Reversal</div></button>
+      <button class="btn btn-ghost" style="flex-direction:column;gap:.3rem;padding:.75rem;height:70px" onclick="closeMoreMenu();goScreen('screen-followup')"><div style="font-size:1.3rem">📅</div><div style="font-size:.68rem">Follow-Up</div></button>
+      <button class="btn btn-ghost" style="flex-direction:column;gap:.3rem;padding:.75rem;height:70px" onclick="closeMoreMenu();openCalc()"><div style="font-size:1.3rem">⚖️</div><div style="font-size:.68rem">Doses</div></button>
+      <button class="btn btn-ghost" style="flex-direction:column;gap:.3rem;padding:.75rem;height:70px" onclick="closeMoreMenu();openFeedback()"><div style="font-size:1.3rem">📣</div><div style="font-size:.68rem">Feedback</div></button>
+      <button class="btn btn-ghost" style="flex-direction:column;gap:.3rem;padding:.75rem;height:70px" onclick="closeMoreMenu();goScreen('screen-about')"><div style="font-size:1.3rem">ℹ️</div><div style="font-size:.68rem">About</div></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ NAV ═══
+function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelector('.main').scrollTop=0}
+function setActive(btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+
+// ═══ ASSESS TABS ═══
+function assessTab(name){
+  document.querySelectorAll('.assess-panel').forEach(p=>{p.classList.remove('active-panel');p.style.display='none'});
+  const el=document.getElementById('assess-'+name);
+  if(el){el.style.display='block';el.classList.add('active-panel');}
+  document.querySelectorAll('#assess-tabs .pill-tab').forEach(t=>t.classList.remove('active'));
+  const map=['haemo','wells','imaging','pesi','category','management'];
+  const tabs=document.querySelectorAll('#assess-tabs .pill-tab');
+  const idx=map.indexOf(name);
+  if(tabs[idx])tabs[idx].classList.add('active');
+  document.querySelector('.main').scrollTop=0;
+}
+
+// ═══ WELLS/PERC SUBTABS ═══
+function wellsSubTab(tab){
+  const isWells=tab==='wells';
+  document.getElementById('wells-sub-panel').style.display=isWells?'block':'none';
+  document.getElementById('perc-sub-panel').style.display=isWells?'none':'block';
+  const wt=document.getElementById('sub-tab-wells'),pt=document.getElementById('sub-tab-perc');
+  wt.style.cssText=`flex:1;text-align:center;padding:.45rem .5rem;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;${isWells?'background:rgba(0,212,255,.1);border:1.5px solid var(--cyan);color:var(--cyan)':'background:transparent;border:1.5px solid var(--border2);color:var(--muted)'}`;
+  pt.style.cssText=`flex:1;text-align:center;padding:.45rem .5rem;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;${!isWells?'background:rgba(0,212,255,.1);border:1.5px solid var(--cyan);color:var(--cyan)':'background:transparent;border:1.5px solid var(--border2);color:var(--muted)'}`;
+}
+
+// ═══ HAEMO ═══
+function showHaemoResult(state){
+  const el=document.getElementById('haemo-result');el.style.display='block';
+  if(state==='unstable'){
+    el.innerHTML=`<div class="result-box red"><div class="result-title" style="color:var(--red)">⚡ UNSTABLE — Category D/E</div><div class="mgmt-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Activate PERT + crash team</div><div class="step-detail">Class I recommendation (2026 AHA/ACC)</div></div></div><div class="mgmt-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Bedside Echo → CTPA if moveable</div><div class="step-detail">McConnell's sign, RV/LV ratio on echo confirms PE</div></div></div><div class="mgmt-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">UFH now: 80 U/kg IV + 18 U/kg/hr</div><div class="step-detail">Reversible, pre-thrombolysis compatible</div></div></div><div class="mgmt-step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Systemic thrombolysis (Cat E) — Class I</div><div class="step-detail">Alteplase 100 mg/2h or 50 mg rapid bolus in arrest. CPR ×90 min post-lysis.</div></div></div><div class="mgmt-step"><div class="step-num">5</div><div class="step-body"><div class="step-title">VA-ECMO if refractory (Cat E2)</div><div class="step-detail">Bridge to definitive intervention — specialist centre</div></div></div></div>`;
+  } else {
+    el.innerHTML=`<div class="result-box green" style="cursor:pointer" onclick="assessTab('wells')"><div class="result-title" style="color:var(--green)">✅ STABLE — Proceed to Wells Score</div><div class="mgmt-step" style="background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);border-radius:10px;padding:.6rem .75rem;margin-top:.25rem"><div class="step-num" style="background:var(--green);color:#000;border-color:var(--green)">→</div><div class="step-body"><div class="step-title" style="color:var(--green)">Tap here → Wells Score &amp; PERC</div><div class="step-detail">Calculate pre-test probability, then imaging decision</div></div><div style="color:var(--green);font-size:1.1rem;align-self:center">›</div></div></div>`;
+  }
+}
+
+// ═══ IMAGING OUTCOMES ═══
+function imagingResult(type){
+  const outcomes={
+    'ddimer-neg':{id:'ddimer-outcome',cls:'green',html:`
+      <div class="result-box green">
+        <div class="result-title" style="color:var(--green)">✅ D-Dimer NEGATIVE — PE Excluded</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-bottom:.65rem;line-height:1.6"><b style="color:var(--text)">Interpretation:</b> A negative D-dimer in low–moderate pre-test probability has NPV ~99%, making PE extremely unlikely. No further imaging is required.</div>
+        <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:.6rem .75rem;margin-bottom:.5rem">
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:var(--dim)">Standard confirmed negative</span><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600">&lt;0.5 mg/L</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;padding:.2rem 0"><span style="color:var(--dim)">Age-adjusted (age &gt;50) negative</span><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:600">Age × 10 µg/L</span></div>
+        </div>
+        <div style="font-size:.73rem;font-weight:600;color:var(--green);margin-bottom:.3rem">✅ Recommended Actions</div>
+        <ul class="bullet-list" style="margin-left:.25rem">
+          <li>PE excluded — <b style="color:var(--text)">no CTPA required</b></li>
+          <li>Discharge with safety-net advice</li>
+          <li>Consider alternative diagnosis for symptoms</li>
+          <li>Urgent follow-up if symptoms persist or worsen</li>
+        </ul>
+      </div>`},
+    'ddimer-pos':{id:'ddimer-outcome',cls:'orange',html:`
+      <div class="result-box orange">
+        <div class="result-title" style="color:var(--orange)">⚠️ D-Dimer POSITIVE — Proceed to CTPA</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-bottom:.65rem;line-height:1.6"><b style="color:var(--text)">Interpretation:</b> D-dimer is non-specific (specificity only 41%). Raised in infection, cancer, pregnancy, surgery, AF. A positive result confirms need for imaging but does NOT diagnose PE.</div>
+        <div style="font-size:.73rem;font-weight:600;color:var(--orange);margin-bottom:.3rem">📋 Recommended Actions</div>
+        <ul class="bullet-list" style="margin-left:.25rem">
+          <li>Proceed to <b style="color:var(--text)">CTPA</b> (94% Sn, 98% Sp)</li>
+          <li>If CTPA contraindicated → <b style="color:var(--text)">V/Q SPECT</b> (92%/91%)</li>
+          <li>Consider empirical anticoagulation if CTPA delayed and Wells &gt;4</li>
+          <li>Avoid CTPA in: contrast allergy · CrCl &lt;30 · Pregnancy</li>
+        </ul>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-top:.65rem" onclick="assessTab('imaging');document.querySelector('.main').scrollTop=400">→ Record CTPA Result below</button>
+      </div>`},
+    'ctpa-neg':{id:'ctpa-outcome',cls:'green',html:`
+      <div class="result-box green">
+        <div class="result-title" style="color:var(--green)">✅ CTPA NEGATIVE — PE Excluded</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-bottom:.65rem;line-height:1.6"><b style="color:var(--text)">Interpretation:</b> CTPA has NPV ~99%. A negative CTPA safely excludes clinically significant PE. No anticoagulation required for PE indication.</div>
+        <div style="font-size:.73rem;font-weight:600;color:var(--green);margin-bottom:.3rem">✅ Recommended Actions</div>
+        <ul class="bullet-list" style="margin-left:.25rem">
+          <li>PE excluded — <b style="color:var(--text)">no anticoagulation</b> needed for PE</li>
+          <li>Investigate alternative diagnoses (ACS, pneumonia, pneumothorax, MSK)</li>
+          <li>If high clinical suspicion persists despite negative CTPA → discuss with senior / consider repeat imaging or V/Q SPECT</li>
+          <li>Document decision rationale clearly</li>
+        </ul>
+      </div>`},
+    'ctpa-pos':{id:'ctpa-outcome',cls:'red',html:`
+      <div class="result-box red">
+        <div class="result-title" style="color:var(--red)">⚠️ CTPA POSITIVE — PE Confirmed</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-bottom:.65rem;line-height:1.6"><b style="color:var(--text)">PE is confirmed.</b> Review clot burden, RV/LV ratio on CT, and report for RV strain. Proceed to risk stratification and category assignment.</div>
+        <div style="font-size:.73rem;font-weight:600;color:var(--red);margin-bottom:.3rem">📋 Immediate Actions</div>
+        <ul class="bullet-list" style="margin-left:.25rem">
+          <li>Note <b style="color:var(--text)">RV/LV ratio on CT</b> (abnormal if &gt;1.0) — key for category</li>
+          <li>Send <b style="color:var(--text)">Troponin + BNP/NT-proBNP + Lactate</b> urgently</li>
+          <li>Start <b style="color:var(--text)">anticoagulation now</b> (LMWH or DOAC depending on category)</li>
+          <li>Check haemodynamic status — if deteriorating, activate PERT</li>
+        </ul>
+        <div style="display:flex;gap:.5rem;margin-top:.65rem">
+          <button class="btn btn-yellow btn-full btn-sm" onclick="assessTab('pesi')">→ Calculate sPESI</button>
+          <button class="btn btn-primary btn-full btn-sm" onclick="assessTab('category')">→ Assign Category</button>
+        </div>
+      </div>`},
+    'vq-neg':{id:'vq-outcome',cls:'green',html:`
+      <div class="result-box green">
+        <div class="result-title" style="color:var(--green)">✅ V/Q SPECT NEGATIVE — PE Excluded</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-bottom:.5rem;line-height:1.6">Normal V/Q SPECT effectively excludes clinically significant PE. NPV approaches 99% for normal result. No anticoagulation required.</div>
+        <ul class="bullet-list" style="margin-left:.25rem">
+          <li>PE excluded — no anticoagulation needed</li>
+          <li>Investigate alternative diagnoses</li>
+          <li>Non-diagnostic result (&lt;3%): discuss with radiology, consider CTPA or clinical review</li>
+        </ul>
+      </div>`},
+    'vq-pos':{id:'vq-outcome',cls:'red',html:`
+      <div class="result-box red">
+        <div class="result-title" style="color:var(--red)">⚠️ V/Q SPECT POSITIVE — PE Confirmed</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-bottom:.5rem;line-height:1.6">High-probability V/Q scan confirms PE. Proceed identically to CTPA-positive pathway.</div>
+        <ul class="bullet-list" style="margin-left:.25rem">
+          <li>Send Troponin + BNP + Lactate urgently</li>
+          <li>Start anticoagulation now</li>
+          <li>Note: cannot assess RV/LV ratio on V/Q — arrange echo for RV assessment</li>
+        </ul>
+        <div style="display:flex;gap:.5rem;margin-top:.65rem">
+          <button class="btn btn-yellow btn-full btn-sm" onclick="assessTab('pesi')">→ Calculate sPESI</button>
+          <button class="btn btn-primary btn-full btn-sm" onclick="assessTab('category')">→ Assign Category</button>
+        </div>
+      </div>`}
+  };
+  const o=outcomes[type];
+  if(!o)return;
+  const el=document.getElementById(o.id);
+  el.style.display='block';
+  el.innerHTML=o.html;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══ sPESI ═══
+let pesiScore=0;
+function togglePESI(el,s){
+  el.classList.toggle('checked');pesiScore+=el.classList.contains('checked')?s:-s;
+  const c=document.getElementById('pesi-score-circle'),i=document.getElementById('pesi-interp'),a=document.getElementById('pesi-action'),b=document.getElementById('pesi-result-box');
+  c.textContent=pesiScore;
+  if(pesiScore===0){c.style.borderColor='var(--green)';c.style.color='var(--green)';i.textContent='sPESI = 0 — LOW RISK';i.style.color='var(--green)';a.textContent='30-day mortality ~1% · Likely Category B';b.style.background='rgba(0,229,160,.07)';b.style.borderColor='rgba(0,229,160,.3)'}
+  else{c.style.borderColor='var(--yellow)';c.style.color='var(--yellow)';i.textContent='sPESI = '+pesiScore+' — ELEVATED RISK';i.style.color='var(--yellow)';a.textContent='~10% 30-day mortality · Category C — check biomarkers + RV';b.style.background='rgba(255,214,0,.07)';b.style.borderColor='rgba(255,214,0,.3)'}
+}
+
+// ═══ WELLS ═══
+let wellsScore=0;
+function toggleWells(el,s){
+  el.classList.toggle('checked');wellsScore+=el.classList.contains('checked')?s:-s;wellsScore=Math.round(wellsScore*10)/10;
+  const c=document.getElementById('wells-score-circle'),i=document.getElementById('wells-interp'),a=document.getElementById('wells-action'),b=document.getElementById('wells-result'),p=document.getElementById('wells-next-panel'),ar=document.getElementById('wells-next-arrow');
+  c.textContent=wellsScore;
+  if(wellsScore<=1){c.style.borderColor='var(--green)';c.style.color='var(--green)';i.textContent='Score: '+wellsScore+' — LOW';i.style.color='var(--green)';a.textContent='Apply PERC Rule → if all 8 negative, PE excluded without testing';b.className='result-box green';ar.style.display='none';p.style.display='none';b.onclick=null}
+  else if(wellsScore<=4){c.style.borderColor='var(--yellow)';c.style.color='var(--yellow)';i.textContent='Score: '+wellsScore+' — MODERATE';i.style.color='var(--yellow)';a.textContent='Tap to see D-dimer pathway →';b.className='result-box yellow';b.style.cursor='pointer';ar.style.display='block';b.onclick=()=>showWellsNext('moderate')}
+  else{c.style.borderColor='var(--red)';c.style.color='var(--red)';i.textContent='Score: '+wellsScore+' — HIGH';i.style.color='var(--red)';a.textContent='Tap to see CTPA pathway →';b.className='result-box red';b.style.cursor='pointer';ar.style.display='block';b.onclick=()=>showWellsNext('high')}
+}
+function showWellsNext(level){
+  const p=document.getElementById('wells-next-panel');
+  if(p.style.display!=='none'){p.style.display='none';return}
+  p.style.display='block';
+  if(level==='moderate'){p.innerHTML=`<div style="font-size:.72rem;font-weight:700;color:var(--yellow);margin-bottom:.5rem">📋 NEXT: D-DIMER</div><div style="background:rgba(255,214,0,.07);border:1px solid rgba(255,214,0,.3);border-radius:10px;padding:.7rem;margin-bottom:.4rem"><b style="color:var(--yellow)">D-dimer threshold:</b><div style="font-size:.7rem;color:var(--dim);margin-top:.2rem">Standard: &lt;0.5 mg/L · Age-adj: Age × 10 µg/L<br>Sensitivity 97% · NPV ~99%</div></div><div style="background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.3);border-radius:10px;padding:.7rem"><b style="color:var(--red)">If positive → CTPA:</b><div style="font-size:.7rem;color:var(--dim);margin-top:.2rem">Sn 94%, Sp 98% · Avoid in: contrast allergy, CrCl &lt;30, pregnancy</div></div><button class="btn btn-primary btn-full btn-sm" style="margin-top:.5rem" onclick="assessTab('imaging')">→ Record imaging result</button>`}
+  else{p.innerHTML=`<div style="font-size:.72rem;font-weight:700;color:var(--red);margin-bottom:.5rem">🚨 NEXT: DIRECT CTPA (skip D-dimer)</div><div style="background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.3);border-radius:10px;padding:.7rem;margin-bottom:.4rem"><b style="color:var(--red)">D-dimer unreliable at high PTP</b><div style="font-size:.7rem;color:var(--dim);margin-top:.2rem">CTPA: Sn 94%, Sp 98% · Avoid in: contrast allergy, CrCl &lt;30, pregnancy → V/Q SPECT instead</div></div><div style="background:rgba(255,140,0,.07);border:1px solid rgba(255,140,0,.3);border-radius:10px;padding:.7rem"><b style="color:var(--orange)">⚡ Consider empirical anticoagulation:</b><div style="font-size:.7rem;color:var(--dim);margin-top:.2rem">Enoxaparin 1 mg/kg SC or UFH 80 U/kg IV + 18 U/kg/hr while awaiting scan</div></div><button class="btn btn-primary btn-full btn-sm" style="margin-top:.5rem" onclick="assessTab('imaging')">→ Record imaging result</button>`}
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══ PERC ═══
+function togglePERC_item(el){
+  el.classList.toggle('checked');
+  const checked=document.querySelectorAll('#perc-sub-panel .check-item.checked').length;
+  const result=document.getElementById('perc-result');result.style.display='block';
+  if(checked===0){result.innerHTML=`<div class="result-box green" style="padding:.75rem"><div style="font-weight:700;color:var(--green);font-size:.9rem">✅ PERC NEGATIVE — PE Excluded</div><div style="font-size:.73rem;color:var(--dim);margin-top:.2rem">All 8 criteria absent. Miss rate &lt;2%. No D-dimer or CTPA needed.</div></div>`}
+  else{result.innerHTML=`<div class="result-box red" style="padding:.75rem"><div style="font-weight:700;color:var(--red);font-size:.9rem">⚠️ PERC POSITIVE (${checked} criterion present)</div><div style="font-size:.73rem;color:var(--dim);margin-top:.2rem;margin-bottom:.6rem">Cannot exclude PE. Proceed to testing based on Wells score.</div><div style="display:flex;gap:.5rem"><button class="btn btn-yellow btn-full btn-sm" onclick="showPERCNext('ddimer')">🧪 D-Dimer First (Wells ≤4)</button><button class="btn btn-red btn-full btn-sm" onclick="showPERCNext('ctpa')">🔬 Direct CTPA (Wells &gt;4)</button></div><div id="perc-next-detail" style="margin-top:.6rem"></div></div>`}
+  result.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function showPERCNext(path){
+  const d=document.getElementById('perc-next-detail');
+  if(!d)return;
+  if(d.dataset.open===path){d.innerHTML='';d.dataset.open='';return}
+  d.dataset.open=path;
+  if(path==='ddimer'){d.innerHTML=`<div style="background:rgba(255,214,0,.06);border:1px solid rgba(255,214,0,.3);border-radius:10px;padding:.75rem"><div style="font-weight:700;color:var(--yellow);font-size:.82rem;margin-bottom:.4rem">D-dimer Pathway</div><div style="font-size:.7rem;color:var(--dim);line-height:1.6">Standard: &lt;0.5 mg/L → PE excluded<br>Age-adj (&gt;50): Age × 10 µg/L → PE excluded<br>Sensitivity 97% · NPV ~99%<br>If positive → CTPA (Sn 94%, Sp 98%)</div></div>`}
+  else{d.innerHTML=`<div style="background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.3);border-radius:10px;padding:.75rem"><div style="font-weight:700;color:var(--red);font-size:.82rem;margin-bottom:.4rem">Direct CTPA</div><div style="font-size:.7rem;color:var(--dim);line-height:1.6">D-dimer has unacceptable FN rate at high PTP. CTPA: Sn 94%, Sp 98%<br>Consider empirical LMWH while awaiting scan.<br>If contraindicated → V/Q SPECT 92%/91%</div></div>`}
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══ CATEGORY WIZARD ═══
+let wizData={incidental:null,spesi:0,rv:{arrest:false,shock:false,prelactate:false,rvdys:false,tapse:false,trop:false,bnp:false,resp:false}};
+let currentCat='';
+
+function wizQ1(a){
+  wizData.incidental=(a==='yes');
+  if(a==='yes'){document.getElementById('wiz-step1').style.display='none';wizShowResult(buildCatResult('A',false,0));}
+  else if(a==='no'){document.getElementById('wiz-step1').style.display='none';document.getElementById('wiz-step2').style.display='block';}
+  else{document.getElementById('wiz-step2').style.display='none';document.getElementById('wiz-step1').style.display='block';}
+}
+let wizPesiScore=0;
+function toggleWizPESI(el){
+  el.classList.toggle('checked');
+  wizPesiScore=document.querySelectorAll('#wiz-step2 .check-item.checked').length;
+  wizData.spesi=wizPesiScore;
+  const c=document.getElementById('wiz-pesi-circle'),l=document.getElementById('wiz-pesi-label');
+  c.textContent=wizPesiScore;
+  if(wizPesiScore===0){c.style.borderColor='var(--green)';c.style.color='var(--green)';l.style.color='var(--green)';l.textContent='sPESI = 0 — Low risk';}
+  else{c.style.borderColor='var(--yellow)';c.style.color='var(--yellow)';l.style.color='var(--yellow)';l.textContent='sPESI = '+wizPesiScore+' — Elevated';}
+}
+function wizStep2Next(){document.getElementById('wiz-step2').style.display='none';document.getElementById('wiz-step3').style.display='block';}
+function toggleWizRV(el,key){el.classList.toggle('checked');wizData.rv[key]=el.classList.contains('checked');}
+function wizCalculate(){
+  const rv=wizData.rv,s=wizData.spesi;
+  let cat;
+  if(rv.arrest)cat='E2';
+  else if(rv.shock)cat='E1';
+  else if(rv.prelactate)cat='D';
+  else if(s>=1){const rd=(rv.rvdys||rv.tapse),bd=(rv.trop||rv.bnp);cat=rd&&bd?'C3':rd||bd?'C2':'C1';}
+  else cat='B';
+  document.getElementById('wiz-step3').style.display='none';
+  wizShowResult(buildCatResult(cat,rv.resp,s));
+}
+function wizShowResult(html){
+  const el=document.getElementById('wiz-result');el.style.display='block';el.innerHTML=html;
+  document.getElementById('wiz-reset-btn').style.display='block';
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function wizReset(){
+  wizData={incidental:null,spesi:0,rv:{arrest:false,shock:false,prelactate:false,rvdys:false,tapse:false,trop:false,bnp:false,resp:false}};wizPesiScore=0;
+  ['wiz-step2','wiz-step3'].forEach(id=>{document.getElementById(id).style.display='none'});
+  document.getElementById('wiz-step1').style.display='block';
+  document.getElementById('wiz-result').style.display='none';
+  document.getElementById('wiz-reset-btn').style.display='none';
+  document.querySelectorAll('#assess-category .check-item').forEach(e=>e.classList.remove('checked'));
+  const c=document.getElementById('wiz-pesi-circle');c.textContent='0';c.style.borderColor='var(--muted)';c.style.color='var(--muted)';
+  document.getElementById('wiz-pesi-label').textContent='sPESI = 0';document.getElementById('wiz-pesi-label').style.color='var(--muted)';
+}
+
+const CAT_COLORS={A:'var(--green)',B:'var(--cyan)',C1:'var(--yellow)',C2:'var(--yellow)',C3:'var(--orange)',D:'var(--orange)',E1:'var(--red)',E2:'var(--red)'};
+const CAT_BG={A:'rgba(0,229,160,.07)',B:'rgba(0,212,255,.07)',C1:'rgba(255,214,0,.07)',C2:'rgba(255,214,0,.07)',C3:'rgba(255,140,0,.07)',D:'rgba(255,140,0,.08)',E1:'rgba(255,68,68,.08)',E2:'rgba(255,68,68,.08)'};
+const CAT_BC={A:'rgba(0,229,160,.4)',B:'rgba(0,212,255,.4)',C1:'rgba(255,214,0,.4)',C2:'rgba(255,214,0,.4)',C3:'rgba(255,140,0,.4)',D:'rgba(255,140,0,.5)',E1:'rgba(255,68,68,.5)',E2:'rgba(255,68,68,.5)'};
+
+function buildCatResult(cat,rMod,spesi){
+  currentCat=cat;
+  const col=CAT_COLORS[cat]||'var(--cyan)';
+  const bg=CAT_BG[cat];const bc=CAT_BC[cat];
+  const descs={
+    A:'Asymptomatic PE found incidentally. No symptoms attributable to PE.',
+    B:'Symptomatic PE · sPESI 0 · Normal biomarkers · No RV dysfunction · Haemodynamically stable.',
+    C1:'sPESI ≥1 · No RV dysfunction · Normal troponin and BNP.',
+    C2:'sPESI ≥1 · RV dysfunction OR elevated biomarkers (but not both).',
+    C3:'sPESI ≥1 · RV dysfunction AND elevated troponin/BNP. High deterioration risk.',
+    D:'Normotensive but rising lactate, pre-shock state. "Cuff is OK but patient is failing."',
+    E1:'Persistent cardiogenic shock from massive PE. SBP &lt;90 despite resuscitation.',
+    E2:'Refractory shock or cardiac arrest from massive PE.'
+  };
+  const rLabel=rMod?` <span class="chip chip-purple">+R modifier</span>`:'';
+  const rNote=rMod?`<div class="alert alert-orange" style="margin-top:.6rem"><span class="alert-icon">🫁</span><span style="font-size:.72rem"><b>R Modifier present</b> — respiratory compromise (hypoxia/↑O₂ needs). Cannot discharge early. Requires active O₂ management and closer monitoring.</span></div>`:'';
+  return `
+  <div class="wiz-cat-banner" style="background:${bg};border-color:${bc}">
+    <div class="wiz-cat-letter" style="color:${col}">Category ${cat}${rMod?'R':''}</div>
+    <div class="wiz-cat-title" style="color:${col}">${descs[cat]||''}</div>
+    <div style="margin-bottom:.25rem">${rLabel}</div>
+  </div>
+  ${rNote}
+  <button class="btn btn-primary btn-full" style="margin-bottom:.75rem" onclick="loadManagement('${cat}',${rMod})">📋 View Full Management Plan →</button>`;
+}
+
+// ═══ MANAGEMENT PLAN ═══
+const mgmtPlans={
+  A:{color:'var(--green)',title:'Category A — Management',options:[
+    {icon:'💊',title:'Anticoagulation',detail:`<div class="alert alert-green" style="margin-bottom:.6rem"><span class="alert-icon">✅</span><span>DOAC preferred (Class I). No bridging needed. Start immediately.</span></div><div class="dose-card"><div class="dose-drug">Preferred: Apixaban</div><div class="dose-row"><div class="dose-phase">Loading (Day 1–7)</div><div class="dose-val">10 mg BD</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Maintenance (Day 8+)</div><div class="dose-val">5 mg BD</div></div></div><div class="dose-card"><div class="dose-drug">Alternative: Rivaroxaban</div><div class="dose-row"><div class="dose-phase">Loading (Wk 1–3)</div><div class="dose-val">15 mg BD</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Maintenance (Wk 4+)</div><div class="dose-val">20 mg OD</div></div></div><div class="alert alert-yellow" style="margin-top:.5rem"><span class="alert-icon">⚠️</span><span style="font-size:.7rem">Use LMWH if: pregnancy · mechanical heart valve · APS (triple-positive) · severe CKD (CrCl&lt;30)</span></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Weight-based dose calculator</button>`},
+    {icon:'📏',title:'Duration of Anticoagulation',detail:`<div class="dose-card"><div class="dose-row"><div class="dose-phase">Provoked (transient risk factor)</div><div class="dose-val">3 months</div></div><div class="dose-row"><div class="dose-phase">Unprovoked first PE</div><div class="dose-val">≥3 months → reassess</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Active cancer</div><div class="dose-val">Indefinite</div></div></div>`},
+    {icon:'🏥',title:'Disposition',detail:`<div class="result-box green" style="padding:.75rem"><div style="font-weight:700;color:var(--green)">✅ Discharge from ED</div><div style="font-size:.73rem;color:var(--dim);margin-top:.25rem;line-height:1.6">No hospitalisation required for incidental PE. Prescribe DOAC and arrange outpatient follow-up in 1–2 weeks.</div></div>`},
+    {icon:'🔍',title:'Follow-up & Monitoring',detail:`<div class="monitor-item"><div class="monitor-icon">📅</div><div class="monitor-text"><div class="monitor-label">Follow-up in 1–2 weeks</div><div class="monitor-val">Review: symptoms development, anticoagulation compliance, bleeding, INR (if warfarin)</div></div></div><div class="monitor-item"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Baseline bloods at follow-up</div><div class="monitor-val">FBC, U&E, LFTs — check for anticoagulation complications</div></div></div><div class="monitor-item"><div class="monitor-icon">🔎</div><div class="monitor-text"><div class="monitor-label">Screen for occult malignancy</div><div class="monitor-val">If unprovoked: CT chest/abdomen/pelvis, PSA/CA125 if age-appropriate</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🩺</div><div class="monitor-text"><div class="monitor-label">CTEPH surveillance at 3–6 months</div><div class="monitor-val">If persistent dyspnoea → echo to exclude chronic thromboembolic pulmonary hypertension</div></div></div>`}
+  ]},
+  B:{color:'var(--cyan)',title:'Category B — Management',options:[
+    {icon:'💊',title:'Anticoagulation — Start Immediately',detail:`<div class="alert alert-green" style="margin-bottom:.6rem"><span class="alert-icon">✅</span><span>DOAC preferred. No bridging. Start before discharge.</span></div><div class="dose-card"><div class="dose-drug">Apixaban (preferred)</div><div class="dose-row"><div class="dose-phase">Days 1–7 (loading)</div><div class="dose-val">10 mg BD</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Day 8+ (maintenance)</div><div class="dose-val">5 mg BD</div></div></div><div class="dose-card"><div class="dose-drug">Rivaroxaban (alternative)</div><div class="dose-row"><div class="dose-phase">Weeks 1–3 (loading)</div><div class="dose-val">15 mg BD</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Week 4+ (maintenance)</div><div class="dose-val">20 mg OD</div></div></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Weight-based dose calculator</button>`},
+    {icon:'🏥',title:'Hestia Criteria — Discharge Check',detail:`<div style="font-size:.72rem;color:var(--dim);margin-bottom:.5rem">All must be <b style="color:var(--text)">NEGATIVE</b> for safe discharge. ANY yes = consider admission.</div>${['Haemodynamically unstable','Thrombolysis needed','Active bleeding or high bleed risk','&gt;24h supplemental O₂ needed','CTPA not done yet','Renal impairment (CrCl &lt;30)','Liver disease (INR &gt;1.5 at baseline)','Pregnant','Documented non-compliance','Insufficient home support'].map(h=>`<div class="check-item" style="cursor:default;pointer-events:none;opacity:.8"><div class="chk-box"></div><div class="chk-label" style="font-size:.73rem">${h}</div></div>`).join('')}<div class="result-box green" style="padding:.7rem;margin-top:.5rem"><div style="font-size:.73rem;color:var(--green);font-weight:700">All negative → Safe discharge with oral DOAC</div></div>`},
+    {icon:'📊',title:'Monitoring Parameters',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">Vitals (if admitted)</div><div class="monitor-val">HR, BP, SpO₂ q4h for 24h. Target HR &lt;100, SpO₂ &gt;94%</div></div></div><div class="monitor-item"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Biomarkers (at 0 and 6h)</div><div class="monitor-val">Troponin + BNP — if rising → re-classify to C2/C3</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🫀</div><div class="monitor-text"><div class="monitor-label">Echo (if C2/C3 suspected)</div><div class="monitor-val">RV/LV ratio, TAPSE — if abnormal → escalate category</div></div></div>`},
+    {icon:'📏',title:'Duration & Follow-up',detail:`<div class="dose-card"><div class="dose-row"><div class="dose-phase">Provoked</div><div class="dose-val">3 months</div></div><div class="dose-row"><div class="dose-phase">Unprovoked first PE</div><div class="dose-val">≥3 months → reassess</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Follow-up</div><div class="dose-val">5–7 days</div></div></div>`}
+  ]},
+  C1:{color:'var(--yellow)',title:'Category C1 — Management',options:[
+    {icon:'💊',title:'Anticoagulation',detail:`<div class="dose-card"><div class="dose-drug">Rivaroxaban or Apixaban (preferred)</div><div class="dose-row"><div class="dose-phase">Rivaroxaban loading</div><div class="dose-val">15 mg BD × 3wk</div></div><div class="dose-row"><div class="dose-phase">Rivaroxaban maintenance</div><div class="dose-val">20 mg OD</div></div><div class="dose-row"><div class="dose-phase">Apixaban loading</div><div class="dose-val">10 mg BD × 7d</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Apixaban maintenance</div><div class="dose-val">5 mg BD</div></div></div><div class="dose-card"><div class="dose-drug">Alternative: Enoxaparin bridge → DOAC</div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Enoxaparin treatment dose</div><div class="dose-val">1 mg/kg SC q12h</div></div></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Weight-based dose calculator</button>`},
+    {icon:'🏥',title:'Admission & Disposition',detail:`<div class="result-box yellow" style="padding:.75rem"><div style="font-weight:700;color:var(--yellow)">Ward Admission</div><div style="font-size:.73rem;color:var(--dim);margin-top:.25rem">Standard monitored ward bed. Continuous pulse oximetry. Discharge when clinically stable, usually 24–48h.</div></div>`},
+    {icon:'📊',title:'Monitoring Parameters',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">Vitals q4h</div><div class="monitor-val">HR, BP, SpO₂, RR. Alert if HR &gt;110, SBP &lt;100, SpO₂ &lt;90%</div></div></div><div class="monitor-item"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Troponin at 0 and 6–12h</div><div class="monitor-val">Rising trend = upgrade to C2/C3</div></div></div><div class="monitor-item"><div class="monitor-icon">🔬</div><div class="monitor-text"><div class="monitor-label">BNP / NT-proBNP at 0 and 24h</div><div class="monitor-val">Rising = upgrade category. Target trending down before discharge</div></div></div><div class="monitor-item"><div class="monitor-icon">🫀</div><div class="monitor-text"><div class="monitor-label">Echo at 24–48h</div><div class="monitor-val">Confirm RV function stable before discharge</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🩸</div><div class="monitor-text"><div class="monitor-label">Anti-Xa if LMWH used</div><div class="monitor-val">Target 0.6–1.0 IU/mL (q12h dose), 4h post-injection</div></div></div>`}
+  ]},
+  C2:{color:'var(--yellow)',title:'Category C2 — Management',options:[
+    {icon:'💊',title:'Anticoagulation',detail:`<div class="alert alert-orange"><span class="alert-icon">⚠️</span><span>Start parenteral anticoagulation immediately. Transition to DOAC when haemodynamically stable.</span></div><div class="dose-card"><div class="dose-drug">UFH (preferred for C2 — reversible)</div><div class="dose-row"><div class="dose-phase">Bolus</div><div class="dose-val">80 U/kg IV</div></div><div class="dose-row"><div class="dose-phase">Infusion start</div><div class="dose-val">18 U/kg/hr</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Target aPTT</div><div class="dose-val">60–80 sec</div></div></div><div class="dose-card"><div class="dose-drug">Alternative: Enoxaparin</div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Treatment</div><div class="dose-val">1 mg/kg SC q12h</div></div></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Weight-based dose calculator</button>`},
+    {icon:'🏥',title:'Disposition — HDU',detail:`<div class="result-box orange" style="padding:.75rem"><div style="font-weight:700;color:var(--orange)">HDU / Monitored Bed</div><div style="font-size:.73rem;color:var(--dim);margin-top:.25rem">Continuous cardiac monitoring. Hourly MAP and HR. Alert triggers set. Consider PERT consultation if troponin/BNP both rise.</div></div>`},
+    {icon:'📊',title:'Monitoring Parameters',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">Continuous cardiac monitoring</div><div class="monitor-val">Arterial line if haemodynamically borderline. Hourly MAP target &gt;65 mmHg</div></div></div><div class="monitor-item"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Troponin at 0, 6h, 12h</div><div class="monitor-val">If rises + RV dysfunction → C3. Activate PERT.</div></div></div><div class="monitor-item"><div class="monitor-icon">🫀</div><div class="monitor-text"><div class="monitor-label">Echo at 12–24h</div><div class="monitor-val">RV/LV ratio, TAPSE, sPAP. Serial comparison if C3 suspected</div></div></div><div class="monitor-item"><div class="monitor-icon">💉</div><div class="monitor-text"><div class="monitor-label">aPTT if UFH</div><div class="monitor-val">Check 4–6h after starting infusion. Target 60–80 sec. Adjust per nomogram.</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🩺</div><div class="monitor-text"><div class="monitor-label">Urine output</div><div class="monitor-val">Target &gt;0.5 mL/kg/hr. Oliguria = early sign of haemodynamic compromise → escalate</div></div></div>`},
+    {icon:'🚨',title:'PERT Criteria — When to Escalate',detail:`<div class="alert alert-red"><span class="alert-icon">🚨</span><span>Activate PERT if ANY of the following develop:</span></div><ul class="bullet-list" style="margin-left:.25rem"><li>Both Troponin AND BNP now elevated (→ C3)</li><li>MAP falling despite fluid resuscitation</li><li>Rising lactate &gt;2 mmol/L</li><li>Worsening RV/LV ratio on repeat echo</li><li>SpO₂ &lt;90% on room air or escalating O₂</li></ul>`}
+  ]},
+  C3:{color:'var(--orange)',title:'Category C3 — Management',options:[
+    {icon:'🚨',title:'PERT Activation — Immediate',detail:`<div class="pert-box" style="background:rgba(255,68,68,.1);border:1.5px solid rgba(255,68,68,.4);border-radius:10px;padding:.8rem;margin-bottom:.5rem"><div style="font-weight:700;color:var(--red);margin-bottom:.35rem">🚨 PERT — Class IIa (2026 AHA/ACC)</div><div style="font-size:.73rem;color:var(--dim);line-height:1.6">Multidisciplinary team: Emergency, Pulmonology, Cardiology, Interventional Radiology, Cardiothoracic Surgery, Haematology<br><br>Decision: CDT vs mechanical thrombectomy vs systemic thrombolysis vs anticoagulation alone</div></div>`},
+    {icon:'💊',title:'Anticoagulation',detail:`<div class="dose-card"><div class="dose-drug">UFH — preferred (pre-intervention compatible)</div><div class="dose-row"><div class="dose-phase">Bolus</div><div class="dose-val">80 U/kg IV (max 10,000 U)</div></div><div class="dose-row"><div class="dose-phase">Infusion</div><div class="dose-val">18 U/kg/hr</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Target aPTT</div><div class="dose-val">60–80 sec</div></div></div><div class="alert alert-yellow" style="margin-top:.4rem"><span class="alert-icon">⚠️</span><span style="font-size:.7rem">If thrombolysis or CDT planned → pause UFH during procedure. Restart when aPTT &lt;80 sec post-procedure.</span></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Weight-based dose calculator</button>`},
+    {icon:'📊',title:'Monitoring — ICU/HDU',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">Continuous monitoring + arterial line</div><div class="monitor-val">MAP target &gt;65 mmHg. Consider vasopressors (noradrenaline) if MAP falling. Avoid excessive fluid loading (RV overload).</div></div></div><div class="monitor-item"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Serial troponin + lactate q4–6h</div><div class="monitor-val">Rising lactate → Cat D. Plan immediate escalation.</div></div></div><div class="monitor-item"><div class="monitor-icon">💉</div><div class="monitor-text"><div class="monitor-label">aPTT q4–6h (UFH)</div><div class="monitor-val">Target 60–80 sec. Adjust per weight-based nomogram.</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🫀</div><div class="monitor-text"><div class="monitor-label">Repeat echo at 24h</div><div class="monitor-val">Assess RV recovery post-intervention or anticoagulation</div></div></div>`},
+    {icon:'🔪',title:'Advanced Therapy Options (PERT decision)',detail:`<div class="mgmt-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Catheter-Directed Thrombolysis (CDT)</div><div class="step-detail">Alteplase 1–2 mg/hr via pulmonary catheter × 12–24h. Total dose &lt;20–24 mg. Preferred over systemic lysis in C3 — lower bleed risk.</div></div></div><div class="mgmt-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Mechanical Thrombectomy</div><div class="step-detail">EKOS ultrasound-assisted or aspiration thrombectomy. Consider if thrombolytics contraindicated.</div></div></div><div class="mgmt-step" style="margin-bottom:0"><div class="step-num">3</div><div class="step-body"><div class="step-title">Systemic Thrombolysis (if above unavailable/failed)</div><div class="step-detail">Alteplase half-dose: 50 mg/2h. Full dose if Cat E criteria met.</div></div></div>`}
+  ]},
+  D:{color:'var(--orange)',title:'Category D — Management',options:[
+    {icon:'🚨',title:'PERT — Activate Now',detail:`<div class="alert alert-red"><span class="alert-icon">🚨</span><span><b>Class IIa — urgent PERT activation.</b> Patient is in pre-shock. Every minute without intervention risks progression to Cat E.</span></div><ul class="bullet-list" style="margin-left:.25rem"><li>Activate PERT regardless of time of day</li><li>Haematology, Cardiology, CT Surgery, IR on call</li><li>Prepare for CDT, mechanical thrombectomy, and systemic lysis</li><li>Have alteplase and ECMO plan ready</li></ul>`},
+    {icon:'💊',title:'Anticoagulation — UFH IV',detail:`<div class="dose-card"><div class="dose-drug">UFH — ONLY option for Cat D</div><div class="dose-row"><div class="dose-phase">IV bolus</div><div class="dose-val">80 U/kg (max 10,000 U)</div></div><div class="dose-row"><div class="dose-phase">IV infusion</div><div class="dose-val">18 U/kg/hr</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">aPTT target</div><div class="dose-val">60–80 sec</div></div></div><div class="alert alert-yellow"><span class="alert-icon">⚠️</span><span style="font-size:.7rem">Do NOT give LMWH or DOAC — must be reversible before thrombolysis. Pause UFH if lysis needed.</span></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Calculator</button>`},
+    {icon:'📊',title:'ICU Monitoring',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">Arterial line + continuous monitoring</div><div class="monitor-val">MAP q15min. Noradrenaline if MAP &lt;65 mmHg. Avoid dopamine (arrhythmogenic in RV failure).</div></div></div><div class="monitor-item"><div class="monitor-icon">🩸</div><div class="monitor-text"><div class="monitor-label">Lactate q2h</div><div class="monitor-val">Serial trending. Rising despite UFH = systemic lysis decision point.</div></div></div><div class="monitor-item"><div class="monitor-icon">💧</div><div class="monitor-text"><div class="monitor-label">Urine output hourly</div><div class="monitor-val">Target &gt;0.5 mL/kg/hr. Oliguria = haemodynamic deterioration → escalate.</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">💉</div><div class="monitor-text"><div class="monitor-label">aPTT q4h until stable</div><div class="monitor-val">Target 60–80 sec. Weight-based titration.</div></div></div>`},
+    {icon:'⚡',title:'Escalation to Cat E Protocol',detail:`<div class="alert alert-red"><span class="alert-icon">⚡</span><span>IMMEDIATE escalation if ANY of the following develop:</span></div><ul class="bullet-list" style="margin-left:.25rem"><li>SBP drops below 90 mmHg → Category E1</li><li>Cardiac arrest → Category E2</li><li>Lactate &gt;4 mmol/L despite UFH</li><li>Rapidly deteriorating SpO₂ unresponsive to O₂</li></ul><div class="alert alert-orange" style="margin-top:.5rem"><span class="alert-icon">💊</span><span style="font-size:.7rem"><b>If escalating to E:</b> Alteplase 100 mg/2h or 50 mg rapid bolus. CPR + alteplase simultaneously if arresting.</span></div>`}
+  ]},
+  E1:{color:'var(--red)',title:'Category E1 — Management',options:[
+    {icon:'🚨',title:'Immediate Resuscitation',detail:`<div class="alert alert-red"><span class="alert-icon">🚨</span><span>Simultaneous PERT + crash team. This is a time-critical emergency.</span></div><div class="mgmt-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Airway + 2 large-bore IV access</div><div class="step-detail">Avoid intubation if possible — IPPV increases RV afterload. NIV/High-flow O₂ preferred.</div></div></div><div class="mgmt-step" style="margin-bottom:0"><div class="step-num">2</div><div class="step-body"><div class="step-title">Vasopressors</div><div class="step-detail">Noradrenaline 0.1–0.3 mcg/kg/min IV. Target MAP &gt;65 mmHg. Avoid dopamine.</div></div></div>`},
+    {icon:'💊',title:'Systemic Thrombolysis — Class I',detail:`<div class="alert alert-red" style="margin-bottom:.5rem"><span class="alert-icon">⚡</span><span><b>Class I recommendation (2026 AHA/ACC)</b> for Category E with persistent haemodynamic compromise.</span></div><div class="dose-card"><div class="dose-drug">Alteplase — Full dose</div><div class="dose-row"><div class="dose-phase">Regimen</div><div class="dose-val">100 mg over 2h</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Method</div><div class="dose-val">10 mg IV bolus + 90 mg/2h</div></div></div><div class="dose-card"><div class="dose-drug">Alteplase — Half dose (high bleed risk)</div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Regimen</div><div class="dose-val">50 mg over 2h</div></div></div><div class="alert alert-yellow" style="margin-top:.4rem"><span class="alert-icon">⚠️</span><span style="font-size:.7rem">Pause UFH during lysis. Restart when aPTT &lt;80 sec (usually 2–4h post-lysis).</span></div><button class="btn btn-ghost btn-full btn-sm" style="margin-top:.4rem" onclick="openCalc()">⚖️ Calculator</button>`},
+    {icon:'📊',title:'ICU Monitoring',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">Arterial line + CVP + continuous ECG</div><div class="monitor-val">MAP q5–15min. Post-lysis: hourly BP. Watch for rebound hypotension or haemorrhage.</div></div></div><div class="monitor-item"><div class="monitor-icon">🩸</div><div class="monitor-text"><div class="monitor-label">Lactate + ABG q1–2h</div><div class="monitor-val">Clearance of lactate = treatment response. If not clearing in 2h → surgical option.</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Serial troponin + echo at 6h and 24h post-lysis</div><div class="monitor-val">Falling troponin + improving RV/LV ratio = treatment success</div></div></div>`},
+    {icon:'🔪',title:'If Thrombolysis Fails or Contraindicated',detail:`<div class="mgmt-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Surgical Embolectomy</div><div class="step-detail">Immediate cardiothoracic surgery referral. Gold standard if lysis failed or absolutely contraindicated.</div></div></div><div class="mgmt-step" style="margin-bottom:0"><div class="step-num">2</div><div class="step-body"><div class="step-title">VA-ECMO</div><div class="step-detail">Bridge to definitive treatment — cardiac recovery or surgical embolectomy. Requires specialist centre.</div></div></div>`}
+  ]},
+  E2:{color:'var(--red)',title:'Category E2 — Arrest / Refractory Shock',options:[
+    {icon:'🚨',title:'CPR + Thrombolysis Simultaneously',detail:`<div class="alert alert-red"><span class="alert-icon">🚨</span><span><b>Do not delay thrombolysis for diagnostic confirmation in witnessed cardiac arrest with suspected PE.</b></span></div><div class="dose-card"><div class="dose-drug">Alteplase — Arrest dose</div><div class="dose-row"><div class="dose-phase">Bolus</div><div class="dose-val">50 mg rapid IV</div></div><div class="dose-row" style="border-bottom:none"><div class="dose-phase">Continue CPR for</div><div class="dose-val">≥90 minutes post-lysis</div></div></div>`},
+    {icon:'📊',title:'Post-ROSC Monitoring',detail:`<div class="monitor-item"><div class="monitor-icon">💓</div><div class="monitor-text"><div class="monitor-label">ICU admission post-ROSC</div><div class="monitor-val">Continuous haemodynamic monitoring. Target MAP &gt;65. Targeted temperature management if appropriate.</div></div></div><div class="monitor-item"><div class="monitor-icon">🫀</div><div class="monitor-text"><div class="monitor-label">Echo within 1h of ROSC</div><div class="monitor-val">Assess RV recovery. Guide further treatment decisions.</div></div></div><div class="monitor-item" style="border-bottom:none"><div class="monitor-icon">🧪</div><div class="monitor-text"><div class="monitor-label">Troponin + lactate post-ROSC</div><div class="monitor-val">Serial trending q2–4h. Rising lactate despite ROSC = consider VA-ECMO.</div></div></div>`},
+    {icon:'🔪',title:'Escalation Options',detail:`<div class="mgmt-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">VA-ECMO</div><div class="step-detail">For refractory shock post-ROSC or as bridge to surgical embolectomy. Activate ECMO team simultaneously with CPR if available.</div></div></div><div class="mgmt-step" style="margin-bottom:0"><div class="step-num">2</div><div class="step-body"><div class="step-title">Surgical Embolectomy</div><div class="step-detail">If lysis fails or is contraindicated. Only option if ECMO unavailable and haemodynamics unrecoverable.</div></div></div>`}
+  ]}
+};
+
+function loadManagement(cat,rMod){
+  currentCat=cat;
+  const plan=mgmtPlans[cat];
+  if(!plan){assessTab('management');return;}
+  const col=plan.color;
+  let html=`
+    <div style="background:${CAT_BG[cat]};border:2px solid ${CAT_BC[cat]};border-radius:14px;padding:1rem;margin-bottom:.75rem">
+      <div style="font-size:1.8rem;font-weight:800;color:${col}">Category ${cat}${rMod?'R':''}</div>
+      <div style="font-size:.8rem;font-weight:600;color:${col};margin-top:.15rem">${plan.title}</div>
+      ${rMod?`<div class="alert alert-orange" style="margin-top:.6rem;margin-bottom:0"><span class="alert-icon">🫁</span><span style="font-size:.7rem"><b>R Modifier:</b> Respiratory compromise present. Escalated O₂ monitoring. Cannot discharge early.</span></div>`:''}
+    </div>
+    <div style="margin-bottom:.75rem"><button class="btn btn-ghost btn-full btn-sm" onclick="openCalc()">⚖️ Open Weight-Based Dose Calculator</button></div>`;
+  plan.options.forEach((opt,i)=>{
+    html+=`<div class="mgmt-option" id="mopt-${i}">
+      <div class="mgmt-option-header" onclick="toggleMgmtOption(${i})">
+        <div class="mgmt-option-icon">${opt.icon}</div>
+        <div class="mgmt-option-title">${opt.title}</div>
+        <div class="mgmt-option-arrow">›</div>
+      </div>
+      <div class="mgmt-option-body">${opt.detail}</div>
+    </div>`;
+  });
+  html+=`<div class="card" style="margin-top:.75rem;background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.2)">
+    <div style="font-weight:700;font-size:.78rem;color:var(--cyan);margin-bottom:.4rem">Duration of Anticoagulation</div>
+    <div style="font-size:.72rem;color:var(--dim);line-height:1.7">
+      Provoked (transient): <b style="color:var(--text)">3 months</b> ·
+      Unprovoked first: <b style="color:var(--text)">≥3m, reassess</b> ·
+      Cancer: <b style="color:var(--text)">Indefinite</b> ·
+      Recurrent unprovoked: <b style="color:var(--text)">Indefinite</b>
+    </div>
+  </div>
+  <div style="margin-top:.5rem"><button class="btn btn-ghost btn-full btn-sm" onclick="assessTab('category')">← Back to Category Assignment</button></div>`;
+  document.getElementById('mgmt-content').innerHTML=html;
+  assessTab('management');
+}
+
+function toggleMgmtOption(idx){
+  const el=document.getElementById('mopt-'+idx);
+  el.classList.toggle('open');
+}
+
+// ═══ CATEGORY REFERENCE SCREEN ═══
+const catDataRef={
+  A:{color:'var(--green)',bc:'rgba(0,229,160,.4)',bg:'rgba(0,229,160,.07)',desc:'Asymptomatic incidental PE. Discharge from ED. DOAC immediately.',pert:false,steps:[['Anticoagulate with DOAC','Apixaban 10 mg BD ×7d then 5 mg BD. No bridging.'],['Discharge from ED','No hospitalisation needed.'],['Follow-up 1–2 weeks','Review symptoms, compliance, bleeding.']]},
+  B:{color:'var(--cyan)',bc:'rgba(0,212,255,.4)',bg:'rgba(0,212,255,.07)',desc:'Symptomatic PE, sPESI 0, normal biomarkers, no RV dysfunction.',pert:false,steps:[['DOAC immediately','No bridging. Apixaban or rivaroxaban preferred.'],['Hestia criteria','All negative → safe discharge.'],['Follow-up 5–7 days','Compliance, no deterioration.']]},
+  C:{color:'var(--yellow)',bc:'rgba(255,214,0,.4)',bg:'rgba(255,214,0,.07)',desc:'sPESI ≥1. Subcategories C1/C2/C3 by RV function and biomarkers.',pert:true,steps:[['Subclassify C1/C2/C3','C1: No RV dysfn+normal bio. C2: RV OR bio. C3: RV AND bio.'],['Anticoagulate','C1: DOAC direct. C2/C3: UFH then DOAC.'],['Admit and monitor','C1: Ward. C2: HDU. C3: ICU+PERT.']]},
+  D:{color:'var(--orange)',bc:'rgba(255,140,0,.5)',bg:'rgba(255,140,0,.08)',desc:'Normotensive but pre-shock. Rising lactate >2, falling UO.',pert:true,steps:[['Activate PERT','Immediate — Class IIa.'],['UFH IV + ICU','80 U/kg bolus + 18 U/kg/hr. Continuous monitoring.'],['Advanced therapy','CDT or mechanical thrombectomy.']]},
+  E:{color:'var(--red)',bc:'rgba(255,68,68,.5)',bg:'rgba(255,68,68,.08)',desc:'E1: Persistent shock. E2: Arrest / refractory shock.',pert:true,steps:[['PERT + crash team','Immediate activation.'],['Systemic thrombolysis — Class I','Alteplase 100 mg/2h. Arrest: 50 mg bolus.'],['VA-ECMO or surgical embolectomy','If lysis fails or contraindicated.']]}
+};
+function showCat(cat){
+  const d=catDataRef[cat];if(!d)return;
+  const el=document.getElementById('cat-detail');el.style.display='block';
+  const pert=d.pert?`<div style="background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.35);border-radius:10px;padding:.75rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.65rem"><div style="font-size:1.2rem">🚨</div><div><div style="font-weight:700;color:var(--red);font-size:.85rem">PERT Activation — Class I</div><div style="font-size:.7rem;color:var(--dim)">Multidisciplinary team decision required</div></div></div>`:'';
+  const steps=d.steps.map((s,i)=>`<div class="mgmt-step"><div class="step-num">${i+1}</div><div class="step-body"><div class="step-title">${s[0]}</div><div class="step-detail">${s[1]}</div></div></div>`).join('');
+  el.innerHTML=`<div style="background:${d.bg};border:2px solid ${d.bc};border-radius:12px;padding:.85rem;margin-bottom:.6rem"><div style="font-size:1.4rem;font-weight:800;color:${d.color}">Category ${cat}</div><div style="font-size:.75rem;color:var(--dim);margin-top:.15rem">${d.desc}</div></div>${pert}<div class="card"><div class="sec-title">Key Steps</div>${steps}</div>`;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══ DOSE CALCULATOR ═══
+function openCalc(){document.getElementById('calc-modal').style.display='flex';document.getElementById('modal-weight').value='';document.getElementById('modal-calc-result').style.display='none';}
+function closeCalc(){document.getElementById('calc-modal').style.display='none';}
+function calcModalDoses(){
+  const w=parseFloat(document.getElementById('modal-weight').value);
+  if(!w||w<10)return;
+  document.getElementById('modal-calc-result').style.display='block';
+  const enoxTreat=Math.min(Math.round(w*1),120);
+  const enoxOD=Math.min(Math.round(w*1.5),180);
+  const hepBolus=Math.min(Math.round(w*80),10000);
+  const hepInf=Math.round(w*18);
+  let fonda='7.5 mg';if(w<50)fonda='5 mg';else if(w>100)fonda='10 mg';
+  const dalt=Math.min(Math.round(w*200),18000);
+  let tnk='35 mg';
+  if(w<60)tnk='30 mg';
+  else if(w<70)tnk='35 mg';
+  else if(w<80)tnk='40 mg';
+  else if(w<90)tnk='45 mg';
+  else tnk='50 mg';
+  document.getElementById('c-enox-treat').textContent=enoxTreat+' mg q12h';
+  document.getElementById('c-enox-od').textContent=enoxOD+' mg q24h';
+  document.getElementById('c-hep-bolus').textContent=hepBolus.toLocaleString()+' U';
+  document.getElementById('c-hep-inf').textContent=hepInf.toLocaleString()+' U/hr';
+  document.getElementById('c-fonda').textContent=fonda+' SC OD';
+  document.getElementById('c-dalt').textContent=dalt.toLocaleString()+' IU OD';
+  document.getElementById('c-tnk').textContent=tnk+' IV bolus';
+  // Apixaban dose reduction
+  const apixNote=w<=60?'Dose reduction criteria: wt ≤60 kg':'Standard body weight';
+  document.getElementById('c-apix-note').textContent=apixNote;
+}
+
+// ═══ DRUG / TEST TABS ═══
+function drugTab(n,btn){['par','doac','lytic','special'].forEach(x=>{const e=document.getElementById('drug-'+x);if(e)e.style.display=x===n?'block':'none'});document.querySelectorAll('#screen-drugs .pill-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
+function testTab(n,btn){['bio','img','ecg'].forEach(x=>{const e=document.getElementById('test-'+x);if(e)e.style.display=x===n?'block':'none'});document.querySelectorAll('#screen-tests .pill-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
+
+// ═══ TERMS OF USE ═══
+const TOU_KEY = 'pe_manager_tou_v1';
+const touChecks = {c1:false,c2:false,c3:false,c4:false};
+
+function checkTOUOnLoad(){
+  if(localStorage.getItem(TOU_KEY)==='accepted'){
+    document.getElementById('tou-overlay').style.display='none';
+  }
+}
+window.addEventListener('load', checkTOUOnLoad);
+
+function touCheck(row, key){
+  row.classList.toggle('checked');
+  row.querySelector('.chk-box').style.background = row.classList.contains('checked') ? 'var(--green)' : '';
+  row.querySelector('.chk-box').style.borderColor = row.classList.contains('checked') ? 'var(--green)' : '';
+  row.querySelector('.chk-box').style.content = '';
+  touChecks[key] = row.classList.contains('checked');
+  const allChecked = Object.values(touChecks).every(v=>v);
+  const btn = document.getElementById('tou-accept-btn');
+  btn.disabled = !allChecked;
+  btn.className = 'tou-accept-btn' + (allChecked ? ' enabled' : '');
+}
+
+function acceptTOU(){
+  if(!Object.values(touChecks).every(v=>v)) return;
+  localStorage.setItem(TOU_KEY,'accepted');
+  document.getElementById('tou-overlay').style.display='none';
+}
+
+function resetTOU(){
+  localStorage.removeItem(TOU_KEY);
+  location.reload();
+}
+
+function openTermsModal(){document.getElementById('terms-modal').style.display='flex';}
+function closeTermsModal(){document.getElementById('terms-modal').style.display='none';}
+
+// ═══ FEEDBACK ═══
+function openFeedback(){document.getElementById('feedback-modal').style.display='flex';}
+function closeFeedback(){document.getElementById('feedback-modal').style.display='none';}
+function toggleFeedbackChip(el){el.classList.toggle('selected');}
+
+// ═══ MORE MENU ═══
+function openMoreMenu(){document.getElementById('more-menu').style.display='flex';}
+function closeMoreMenu(){document.getElementById('more-menu').style.display='none';}
+
+// ═══ REVERSAL TABS ═══
+function revTab(n,btn){
+  ['agents','approach','restartac'].forEach(x=>{const e=document.getElementById('rev-'+x);if(e)e.style.display=x===n?'block':'none'});
+  document.querySelectorAll('#screen-reversal .pill-tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+
+// ═══ FOLLOW-UP TABS ═══
+function fuTab(n,btn){
+  ['timeline','duration','cteph','thrombophilia'].forEach(x=>{const e=document.getElementById('fu-'+x);if(e)e.style.display=x===n?'block':'none'});
+  document.querySelectorAll('#screen-followup .pill-tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+
+// ── Add reversal + followup links to home screen quick actions ──
+window.addEventListener('DOMContentLoaded', function(){
+  // Inject extra home cards after existing ones
+  const homeExtra = `
+    <div class="card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="goScreen('screen-reversal')">
+      <div class="card-title"><span style="font-size:1.3rem">🩸</span> Anticoagulation Reversal</div>
+      <div class="card-sub">Reversal agents · Bleeding protocol · When to restart</div>
+      <div class="btn btn-ghost btn-sm" style="margin-top:.5rem">View Reversal →</div>
+    </div>
+    <div class="card" style="cursor:pointer;border-left:3px solid var(--teal)" onclick="goScreen('screen-followup')">
+      <div class="card-title"><span style="font-size:1.3rem">📅</span> Post-PE Follow-Up</div>
+      <div class="card-sub">Duration · CTEPH surveillance · Thrombophilia screen</div>
+      <div class="btn btn-ghost btn-sm" style="margin-top:.5rem">View Follow-Up →</div>
+    </div>`;
+  const divider = document.querySelector('#screen-home .divider');
+  if(divider) divider.insertAdjacentHTML('beforebegin', homeExtra);
+  checkTOUOnLoad();
+});
+
+</script>
+</body>
+</html>
